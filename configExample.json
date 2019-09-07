@@ -1,0 +1,7 @@
+{"mysqlServer": "jdbc:mariadb://127.0.0.1:3306/location",
+  "mysqlUsername":  "",
+  "mysqlPassword":  "",
+  "owntracksTopic":  ["owntracks/koen/oneplus6"],
+  "mqttServer":  "ssl://mqtt.example.com:1883",
+  "mqttUsername": "",
+  "mqttPassword":  ""}

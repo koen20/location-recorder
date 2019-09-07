@@ -1,0 +1,27 @@
+plugins {
+    id 'java'
+}
+
+apply plugin: 'java'
+apply plugin: 'application'
+
+group 'nl.koenhabets.owntracks-mysql'
+version '1.0'
+
+mainClassName = 'main'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.1'
+    implementation 'org.mariadb.jdbc:mariadb-java-client:2.4.1'
+    implementation 'org.json:json:20180813'
+    implementation "com.sparkjava:spark-core:2.9.1"
+    implementation 'com.google.code.gson:gson:2.8.5'
+    
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
