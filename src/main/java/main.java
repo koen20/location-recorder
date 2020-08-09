@@ -11,12 +11,14 @@ public class main {
     public static void main(String args[]) {
         confItem = getConfig();
         Data data = new Data();
+        PhoneTrack phoneTrack = new PhoneTrack();
         new Mysql();
         new Mqtt();
 
         Spark.port(9936);
 
         get("/info", data::getData);
+        get("/add", phoneTrack::addData);
 
     }
 

@@ -22,7 +22,7 @@ public class Mysql {
         @Override
         public void run() {
             try {
-                if (!conn.isValid(2700)) {
+                if (!conn.isValid(3000)) {
                     conn.close();
                     conn = DriverManager.getConnection(main.confItem.getMysqlServer(),
                             main.confItem.getMysqlUsername(), main.confItem.getMysqlPassword());

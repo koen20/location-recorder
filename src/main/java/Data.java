@@ -24,8 +24,8 @@ public class Data {
         JSONArray jsonArray = new JSONArray();
         try {
             Statement stmt = Mysql.conn.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM data WHERE date BETWEEN '" + Mqtt.getMysqlDateString(startTime * 1000) + "' AND '"
-                    + Mqtt.getMysqlDateString(endTime * 1000) + "'");
+            ResultSet rs = stmt.executeQuery("SELECT * FROM data WHERE date BETWEEN '" + Mqtt.getMysqlDateString(startTime) + "' AND '"
+                    + Mqtt.getMysqlDateString(endTime) + "'");
             while (rs.next()) {
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("date", rs.getTimestamp("date"));
