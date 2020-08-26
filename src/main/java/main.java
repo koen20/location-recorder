@@ -14,11 +14,12 @@ public class main {
         PhoneTrack phoneTrack = new PhoneTrack();
         new Mysql();
         new Mqtt();
-
+        Timeline timeline = new Timeline();
         Spark.port(9936);
 
         get("/info", data::getData);
         get("/add", phoneTrack::addData);
+        get("/timeline", timeline::getDataDate);
 
     }
 
