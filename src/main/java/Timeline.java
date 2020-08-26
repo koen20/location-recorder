@@ -6,6 +6,8 @@ import spark.Response;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.ResultSet;
@@ -103,7 +105,7 @@ public class Timeline {
         JSONObject jsonObjectLoc = new JSONObject();
         JSONObject address = new JSONObject();
         try {
-            address = getAddress(lonTot / count, latTot / count);
+            address = getAddress(round(lonTot / count, 5), round(latTot / count, 5));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -119,13 +121,14 @@ public class Timeline {
         jsonObjectLoc.put("start", firstTime.toString());
         jsonObjectLoc.put("end", endTime.toString());
         jsonObjectLoc.put("location", name);
-        jsonObjectLoc.put("lat", latTot / count);
-        jsonObjectLoc.put("lon", lonTot / count);
+        jsonObjectLoc.put("lat", round(latTot / count, 5));
+        jsonObjectLoc.put("lon", round(lonTot / count, 5));
         return jsonObjectLoc;
     }
 
     public JSONObject getAddress(double lon, double lat) throws IOException {
-        URL obj = new URL("http://photon.komoot.de/reverse?lon=" + lon + "&lat=" + lat);
+        //URL obj = new URL("http://photon.komoot.de/reverse?lon=" + lon + "&lat=" + lat);
+        URL obj = new URL("https://vps3.koenhabets.nl/reverse?lon=" + lon + "&lat=" + lat);
         HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 
         con.setRequestMethod("GET");
@@ -163,5 +166,13 @@ public class Timeline {
         distance = Math.pow(distance, 2) + Math.pow(height, 2);
 
         return Math.sqrt(distance);
+    }
+
+    public static double round(double value, int places) {
+        if (places < 0) throw new IllegalArgumentException();
+
+        BigDecimal bd = new BigDecimal(value);
+        bd = bd.setScale(places, RoundingMode.HALF_UP);
+        return bd.doubleValue();
     }
 }
