@@ -11,6 +11,7 @@ import java.net.URL;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.text.ParseException;
 
 public class Timeline {
@@ -38,55 +39,55 @@ public class Timeline {
         return res;
     }
 
-    private JSONObject getData(long start, long end) {
-
+    private JSONArray getData(long start, long end) {
         JSONArray jsonArray = new JSONArray();
-        JSONObject jsonObjectLoc = new JSONObject();
+
         try {
             Statement stmt = Mysql.conn.createStatement();
-            //ResultSet rs = stmt.executeQuery("SELECT * FROM data WHERE date BETWEEN '" + Mqtt.getMysqlDateString(1598227200) + "' AND '"
-            //+ Mqtt.getMysqlDateString(1598313600) + "'");
             ResultSet rs = stmt.executeQuery("SELECT * FROM data WHERE date BETWEEN '" + Mqtt.getMysqlDateString(start) + "' AND '"
                     + Mqtt.getMysqlDateString(end) + "'");
             double lat = 0;
             double lon = 0;
             long time = 0;
+            boolean multiple = true;
             boolean added = true;
+            int count = 0;
+            double latTot = 0;
+            double lonTot = 0;
+            Timestamp firstTime = null;
+            Timestamp endTime = null;
             while (rs.next()) {
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("date", rs.getTimestamp("date"));
-                jsonObject.put("lat", rs.getDouble("lat"));
-                jsonObject.put("lon", rs.getDouble("lon"));
                 if (distance(lat, rs.getDouble("lat"), lon, rs.getDouble("lon"), 0, 0) > 100) {
                     time = rs.getTimestamp("date").getTime();
-                    added = false;
-                }
-                if (distance(lat, rs.getDouble("lat"), lon, rs.getDouble("lon"), 0, 0) < 100 && !added) {
-                    if (rs.getTimestamp("date").getTime() - time > 540000) {
+                    multiple = false;
+                    if (!added) {
+                        jsonArray.put(add(latTot, lonTot, count, firstTime, endTime));
                         added = true;
-                        System.out.println(distance(lat, rs.getDouble("lat"), lon, rs.getDouble("lon"), 0, 0));
-                        System.out.println(rs.getTimestamp("date"));
-                        JSONObject address = new JSONObject();
-                        try {
-                            address = getAddress(rs.getDouble("lon"), rs.getDouble("lat"));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        String name = "";
-                        if(address.has("street")){
-                            name = address.getString("street");
-                            if (address.has("housenumber")){
-                                name = name + " " + address.getString("housenumber");
-                            }
-                        } else if (address.has("name")){
-                            name = address.getString("name");
-                        }
-                        jsonObjectLoc.put(rs.getTimestamp("date").toString(), name);
                     }
+                    count = 0;
+                    latTot = 0;
+                    lonTot = 0;
+                    firstTime = rs.getTimestamp("date");
+                }
+                if (distance(lat, rs.getDouble("lat"), lon, rs.getDouble("lon"), 0, 0) < 100) {
+                    //System.out.println("dif: " + (rs.getTimestamp("date").getTime() - time));
+                    if (rs.getTimestamp("date").getTime() - time > 420000 && !multiple) {
+
+                        multiple = true;
+                        added = false;
+                        System.out.println(rs.getTimestamp("date"));
+                    }
+                    count = count + 1;
+                    latTot = latTot + rs.getDouble("lat");
+                    lonTot = lonTot + rs.getDouble("lon");
+                    endTime = rs.getTimestamp("date");
                 }
                 lat = rs.getDouble("lat");
                 lon = rs.getDouble("lon");
-                jsonArray.put(jsonObject);
+            }
+            if (!added) {
+                jsonArray.put(add(latTot, lonTot, count, firstTime, endTime));
+                added = true;
             }
             rs.close();
             stmt.close();
@@ -95,9 +96,33 @@ public class Timeline {
         }
         System.out.println("datar");
 
-        return jsonObjectLoc;
+        return jsonArray;
     }
 
+    public JSONObject add(double latTot, double lonTot, int count, Timestamp firstTime, Timestamp endTime){
+        JSONObject jsonObjectLoc = new JSONObject();
+        JSONObject address = new JSONObject();
+        try {
+            address = getAddress(lonTot / count, latTot / count);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String name = "";
+        if(address.has("street")){
+            name = address.getString("street");
+            if (address.has("housenumber")){
+                name = name + " " + address.getString("housenumber");
+            }
+        } else if (address.has("name")){
+            name = address.getString("name");
+        }
+        jsonObjectLoc.put("start", firstTime.toString());
+        jsonObjectLoc.put("end", endTime.toString());
+        jsonObjectLoc.put("location", name);
+        jsonObjectLoc.put("lat", latTot / count);
+        jsonObjectLoc.put("lon", lonTot / count);
+        return jsonObjectLoc;
+    }
 
     public JSONObject getAddress(double lon, double lat) throws IOException {
         URL obj = new URL("http://photon.komoot.de/reverse?lon=" + lon + "&lat=" + lat);
