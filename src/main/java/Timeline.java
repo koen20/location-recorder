@@ -70,6 +70,8 @@ public class Timeline {
                     latTot = 0;
                     lonTot = 0;
                     firstTime = rs.getTimestamp("date");
+                    lat = rs.getDouble("lat");
+                    lon = rs.getDouble("lon");
                 }
                 if (distance(lat, rs.getDouble("lat"), lon, rs.getDouble("lon"), 0, 0) < 100) {
                     //System.out.println("dif: " + (rs.getTimestamp("date").getTime() - time));
@@ -84,12 +86,9 @@ public class Timeline {
                     lonTot = lonTot + rs.getDouble("lon");
                     endTime = rs.getTimestamp("date");
                 }
-                lat = rs.getDouble("lat");
-                lon = rs.getDouble("lon");
             }
             if (!added) {
                 jsonArray.put(add(latTot, lonTot, count, firstTime, endTime));
-                added = true;
             }
             rs.close();
             stmt.close();
