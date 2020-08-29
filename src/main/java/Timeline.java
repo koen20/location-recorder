@@ -41,8 +41,11 @@ public class Timeline {
         return res;
     }
 
-    private JSONArray getData(long start, long end) {
+    private JSONObject getData(long start, long end) {
         JSONArray jsonArray = new JSONArray();
+        JSONArray jsonArrayAll = new JSONArray();
+        JSONArray jsonArrayRoutes = new JSONArray();
+        JSONObject jsonObjectRes = new JSONObject();
 
         try {
             Statement stmt = Mysql.conn.createStatement();
@@ -74,33 +77,40 @@ public class Timeline {
                     lon = rs.getDouble("lon");
                 }
                 if (distance(lat, rs.getDouble("lat"), lon, rs.getDouble("lon"), 0, 0) < 100) {
-                    //System.out.println("dif: " + (rs.getTimestamp("date").getTime() - time));
                     if (rs.getTimestamp("date").getTime() - time > 420000 && !multiple) {
 
                         multiple = true;
                         added = false;
                         System.out.println(rs.getTimestamp("date"));
                     }
-                    count = count + 1;
+                    count += 1;
                     latTot = latTot + rs.getDouble("lat");
                     lonTot = lonTot + rs.getDouble("lon");
                     endTime = rs.getTimestamp("date");
                 }
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("date", rs.getTimestamp("date").getTime());
+                jsonObject.put("lat", rs.getDouble("lat"));
+                jsonObject.put("lon", rs.getDouble("lon"));
+                jsonArrayAll.put(jsonObject);
             }
             if (!added) {
                 jsonArray.put(add(latTot, lonTot, count, firstTime, endTime));
             }
             rs.close();
             stmt.close();
+            jsonArrayRoutes = Routes.getRouteFromStop(jsonArray, jsonArrayAll);
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        System.out.println("datar");
 
-        return jsonArray;
+        jsonObjectRes.put("routes", jsonArrayRoutes);
+        jsonObjectRes.put("stops", jsonArray);
+
+        return jsonObjectRes;
     }
 
-    public JSONObject add(double latTot, double lonTot, int count, Timestamp firstTime, Timestamp endTime){
+    public JSONObject add(double latTot, double lonTot, int count, Timestamp firstTime, Timestamp endTime) {
         JSONObject jsonObjectLoc = new JSONObject();
         JSONObject address = new JSONObject();
         try {
@@ -109,16 +119,16 @@ public class Timeline {
             e.printStackTrace();
         }
         String name = "";
-        if(address.has("street")){
+        if (address.has("street")) {
             name = address.getString("street");
-            if (address.has("housenumber")){
+            if (address.has("housenumber")) {
                 name = name + " " + address.getString("housenumber");
             }
-        } else if (address.has("name")){
+        } else if (address.has("name")) {
             name = address.getString("name");
         }
-        jsonObjectLoc.put("start", firstTime.toString());
-        jsonObjectLoc.put("end", endTime.toString());
+        jsonObjectLoc.put("start", firstTime.getTime());
+        jsonObjectLoc.put("end", endTime.getTime());
         jsonObjectLoc.put("location", name);
         jsonObjectLoc.put("lat", round(latTot / count, 5));
         jsonObjectLoc.put("lon", round(lonTot / count, 5));
@@ -131,7 +141,7 @@ public class Timeline {
         HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 
         con.setRequestMethod("GET");
-        con.setRequestProperty("User-Agent", "test");
+        con.setRequestProperty("User-Agent", "owntracks-mysql-recorder");
 
         BufferedReader in = new BufferedReader(
                 new InputStreamReader(con.getInputStream()));
