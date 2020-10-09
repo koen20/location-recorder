@@ -18,9 +18,9 @@ repositories {
 
 dependencies {
     implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5'
-    implementation 'org.mariadb.jdbc:mariadb-java-client:2.6.2'
+    implementation 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
     implementation 'org.json:json:20200518'
-    implementation "com.sparkjava:spark-core:2.9.1"
+    implementation "com.sparkjava:spark-core:2.9.3"
     implementation 'com.google.code.gson:gson:2.8.6'
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
