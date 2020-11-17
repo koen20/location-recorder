@@ -17,7 +17,9 @@ import java.sql.Timestamp;
 import java.text.ParseException;
 
 public class Timeline {
-    public Timeline() {
+    ConfigItem configItem;
+    public Timeline(ConfigItem configItem) {
+        this.configItem = configItem;
         //getData(1597968000, 1598054400);
     }
 
@@ -62,7 +64,7 @@ public class Timeline {
             Timestamp firstTime = null;
             Timestamp endTime = null;
             while (rs.next()) {
-                if (distance(lat, rs.getDouble("lat"), lon, rs.getDouble("lon"), 0, 0) > 100) {
+                if (distance(lat, rs.getDouble("lat"), lon, rs.getDouble("lon"), 0, 0) >= configItem.getRadiusLocation()) {
                     time = rs.getTimestamp("date").getTime();
                     multiple = false;
                     if (!added) {
@@ -76,7 +78,7 @@ public class Timeline {
                     lat = rs.getDouble("lat");
                     lon = rs.getDouble("lon");
                 }
-                if (distance(lat, rs.getDouble("lat"), lon, rs.getDouble("lon"), 0, 0) < 100) {
+                if (distance(lat, rs.getDouble("lat"), lon, rs.getDouble("lon"), 0, 0) < configItem.getRadiusLocation()) {
                     if (rs.getTimestamp("date").getTime() - time > 420000 && !multiple) {
 
                         multiple = true;

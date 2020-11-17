@@ -7,10 +7,9 @@ import java.util.TimerTask;
 public class Mysql {
     static Connection conn;
 
-    public Mysql() {
+    public Mysql(String server, String username, String password) {
         try {
-            conn = DriverManager.getConnection(main.confItem.getMysqlServer(),
-                    main.confItem.getMysqlUsername(), main.confItem.getMysqlPassword());
+            conn = DriverManager.getConnection(server, username, password);
             Timer updateTimer = new Timer();
             updateTimer.scheduleAtFixedRate(new checkMysqlConnection(), 2000, 60000);
         } catch (SQLException e) {

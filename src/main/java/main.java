@@ -12,9 +12,9 @@ public class main {
         confItem = getConfig();
         Data data = new Data();
         PhoneTrack phoneTrack = new PhoneTrack();
-        new Mysql();
-        new Mqtt();
-        Timeline timeline = new Timeline();
+        new Mysql(confItem.getMysqlServer(), confItem.getMysqlUsername(), confItem.getMysqlPassword());
+        new Mqtt(confItem);
+        Timeline timeline = new Timeline(confItem);
         Spark.port(9936);
 
         get("/info", data::getData);

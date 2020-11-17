@@ -4,4 +4,5 @@
   "owntracksTopic":  ["owntracks/koen/oneplus6"],
   "mqttServer":  "ssl://mqtt.example.com:1883",
   "mqttUsername": "",
-  "mqttPassword":  ""}
+  "mqttPassword":  "",
+  "radiusLocation":  140}

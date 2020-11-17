@@ -6,8 +6,9 @@ public class ConfigItem {
     private String[] owntracksTopic;
     private String mysqlUsername;
     private String mysqlPassword;
+    private int radiusLocation;
 
-    public ConfigItem(String mqttServer, String mqttUsername, String mqttPassword, String mysqlServer, String[] owntrackTopic, String mysqlUsername, String mysqlPassword) {
+    public ConfigItem(String mqttServer, String mqttUsername, String mqttPassword, String mysqlServer, String[] owntrackTopic, String mysqlUsername, String mysqlPassword, int radiusLocation) {
         this.mqttServer = mqttServer;
         this.mqttUsername = mqttUsername;
         this.mqttPassword = mqttPassword;
@@ -15,6 +16,7 @@ public class ConfigItem {
         this.owntracksTopic = owntrackTopic;
         this.mysqlUsername = mysqlUsername;
         this.mysqlPassword = mysqlPassword;
+        this.radiusLocation = radiusLocation;
     }
 
     public String getMqttServer() {
@@ -43,5 +45,9 @@ public class ConfigItem {
 
     public String getMqttPassword() {
         return mqttPassword;
+    }
+
+    public int getRadiusLocation() {
+        return radiusLocation;
     }
 }

@@ -10,18 +10,20 @@ import static org.eclipse.paho.client.mqttv3.MqttClient.generateClientId;
 
 public class Mqtt implements MqttCallbackExtended {
     MqttClient client;
+    ConfigItem configItem;
 
-    public Mqtt() {
+    public Mqtt(ConfigItem configItem) {
+        this.configItem = configItem;
         try {
-            client = new MqttClient(main.confItem.getMqttServer(), generateClientId());
+            client = new MqttClient(configItem.getMqttServer(), generateClientId());
             MqttConnectOptions connOpts = new MqttConnectOptions();
-            connOpts.setUserName(main.confItem.getMqttUsername());
-            connOpts.setPassword(main.confItem.getMqttPassword().toCharArray());
+            connOpts.setUserName(configItem.getMqttUsername());
+            connOpts.setPassword(configItem.getMqttPassword().toCharArray());
             connOpts.setAutomaticReconnect(true);
             connOpts.setCleanSession(false);
             client.connect(connOpts);
             client.setCallback(this);
-            client.subscribe(main.confItem.getOwntrackTopic());
+            client.subscribe(configItem.getOwntrackTopic());
         } catch (MqttException e) {
             e.printStackTrace();
         }
@@ -66,7 +68,7 @@ public class Mqtt implements MqttCallbackExtended {
     public void connectComplete(boolean reconnect, java.lang.String serverURI) {
         if (reconnect) {
             try {
-                client.subscribe(main.confItem.getOwntrackTopic());
+                client.subscribe(configItem.getOwntrackTopic());
             } catch (MqttException e) {
                 e.printStackTrace();
             }
