@@ -12,10 +12,19 @@ public class PhoneTrack {
         try {
             String tst = Mqtt.getMysqlDateString(Long.parseLong(request.queryParams("timestamp")));
             Statement stmt = Mysql.conn.createStatement();
-            stmt.executeUpdate("INSERT INTO data VALUES (NULL, '" + tst + "', '"
-                    + request.queryParams("lat") + "', '" + request.queryParams("lon") + "'" +
-                    ", '" + request.queryParams("alt") + "', '" + request.queryParams("acc")
-                    + "',  '" + request.queryParams("batt") + "', '" + request.queryParams("tid") + "')");
+            String alt = request.queryParams("alt");
+            if (alt.equals("")){
+                stmt.executeUpdate("INSERT INTO data VALUES (NULL, '" + tst + "', '"
+                        + request.queryParams("lat") + "', '" + request.queryParams("lon") + "'" +
+                        ", NULL, '" + request.queryParams("acc")
+                        + "',  '" + request.queryParams("batt") + "', '" + request.queryParams("tid") + "')");
+            } else {
+                stmt.executeUpdate("INSERT INTO data VALUES (NULL, '" + tst + "', '"
+                        + request.queryParams("lat") + "', '" + request.queryParams("lon") + "'" +
+                        ", '" + alt + "', '" + request.queryParams("acc")
+                        + "',  '" + request.queryParams("batt") + "', '" + request.queryParams("tid") + "')");
+            }
+
             stmt.close();
         } catch (Exception e) {
             e.printStackTrace();
