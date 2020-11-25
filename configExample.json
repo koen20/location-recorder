@@ -5,4 +5,5 @@
   "mqttServer":  "ssl://mqtt.example.com:1883",
   "mqttUsername": "",
   "mqttPassword":  "",
-  "radiusLocation":  140}
+  "radiusLocation":  140,
+  "reverseGeocodeAddress":  "https://vps3.koenhabets.nl/reverse?lon=LON&lat=LAT"}

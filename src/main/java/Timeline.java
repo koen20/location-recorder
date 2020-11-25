@@ -139,7 +139,7 @@ public class Timeline {
 
     public JSONObject getAddress(double lon, double lat) throws IOException {
         //URL obj = new URL("http://photon.komoot.de/reverse?lon=" + lon + "&lat=" + lat);
-        URL obj = new URL("https://vps3.koenhabets.nl/reverse?lon=" + lon + "&lat=" + lat);
+        URL obj = new URL(configItem.getReverseGeocodeAddress().replace("LON", lon + "").replace("LAT", lat + ""));
         HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 
         con.setRequestMethod("GET");
