@@ -1,3 +1,4 @@
+import jdk.internal.jline.internal.Log;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import spark.Request;
@@ -113,50 +114,15 @@ public class Timeline {
     }
 
     public JSONObject add(double latTot, double lonTot, int count, Timestamp firstTime, Timestamp endTime) {
+        System.out.println("Add");
         JSONObject jsonObjectLoc = new JSONObject();
-        JSONObject address = new JSONObject();
-        try {
-            address = getAddress(round(lonTot / count, 5), round(latTot / count, 5));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        String name = "";
-        if (address.has("street")) {
-            name = address.getString("street");
-            if (address.has("housenumber")) {
-                name = name + " " + address.getString("housenumber");
-            }
-        } else if (address.has("name")) {
-            name = address.getString("name");
-        }
+        String name = Stop.getAddressName(round(lonTot / count, 5), round(latTot / count, 5), configItem).getName();
         jsonObjectLoc.put("start", firstTime.getTime());
         jsonObjectLoc.put("end", endTime.getTime());
         jsonObjectLoc.put("location", name);
         jsonObjectLoc.put("lat", round(latTot / count, 5));
         jsonObjectLoc.put("lon", round(lonTot / count, 5));
         return jsonObjectLoc;
-    }
-
-    public JSONObject getAddress(double lon, double lat) throws IOException {
-        //URL obj = new URL("http://photon.komoot.de/reverse?lon=" + lon + "&lat=" + lat);
-        URL obj = new URL(configItem.getReverseGeocodeAddress().replace("LON", lon + "").replace("LAT", lat + ""));
-        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-
-        con.setRequestMethod("GET");
-        con.setRequestProperty("User-Agent", "owntracks-mysql-recorder");
-
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(con.getInputStream()));
-        String inputLine;
-        StringBuffer response = new StringBuffer();
-
-        while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
-        }
-        in.close();
-        JSONObject jsonObject = new JSONObject(response.toString()).getJSONArray("features").getJSONObject(0).getJSONObject("properties");
-        System.out.println(new JSONObject(response.toString()).getJSONArray("features").getJSONObject(0).toString());
-        return jsonObject;
     }
 
     public static double distance(double lat1, double lat2, double lon1,
