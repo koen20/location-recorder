@@ -34,6 +34,25 @@ public class Mysql {
         return stops;
     }
 
+    public static boolean AddStop(Stop stop){
+        boolean added = false;
+        try {
+            String insert = "INSERT INTO stops VALUES(NULL, ?, ?, ?, ?)";
+            PreparedStatement ps = conn.prepareStatement(insert);
+            ps.setString(1, stop.getName());
+            ps.setDouble(2, stop.getLat());
+            ps.setDouble(3, stop.getLon());
+            ps.setInt(4, stop.getRadius());
+            ps.execute();
+            ps.close();
+            added = true;
+        } catch (SQLException exception){
+            exception.printStackTrace();
+        }
+
+        return added;
+    }
+
     private class checkMysqlConnection extends TimerTask {
         @Override
         public void run() {

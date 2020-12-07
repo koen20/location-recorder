@@ -1,16 +1,10 @@
-import jdk.internal.jline.internal.Log;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import spark.Request;
 import spark.Response;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -33,9 +27,7 @@ public class Timeline {
 
         try {
             dt = sdf.parse(request.queryParams("date"));
-            System.out.println("ja1");
             res = getData(dt.getTime() / 1000, (dt.getTime() + 86400000) / 1000).toString();
-            System.out.println("ja");
         } catch (ParseException e) {
             System.out.println("asodf");
             e.printStackTrace();
@@ -106,7 +98,6 @@ public class Timeline {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
         jsonObjectRes.put("routes", jsonArrayRoutes);
         jsonObjectRes.put("stops", jsonArray);
 
@@ -116,7 +107,7 @@ public class Timeline {
     public JSONObject add(double latTot, double lonTot, int count, Timestamp firstTime, Timestamp endTime) {
         System.out.println("Add");
         JSONObject jsonObjectLoc = new JSONObject();
-        String name = Stop.getAddressName(round(lonTot / count, 5), round(latTot / count, 5), configItem).getName();
+        String name = StopHandler.getAddressName(round(lonTot / count, 5), round(latTot / count, 5), configItem).getName();
         jsonObjectLoc.put("start", firstTime.getTime());
         jsonObjectLoc.put("end", endTime.getTime());
         jsonObjectLoc.put("location", name);

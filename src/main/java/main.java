@@ -3,7 +3,7 @@ import spark.Spark;
 
 import java.io.FileReader;
 
-import static spark.Spark.get;
+import static spark.Spark.*;
 
 public class main {
     public static ConfigItem confItem;
@@ -12,6 +12,7 @@ public class main {
         confItem = getConfig();
         Data data = new Data();
         PhoneTrack phoneTrack = new PhoneTrack();
+        StopHandler stopHandler = new StopHandler();
         new Mysql(confItem.getMysqlServer(), confItem.getMysqlUsername(), confItem.getMysqlPassword());
         new Mqtt(confItem);
         Timeline timeline = new Timeline(confItem);
@@ -20,7 +21,9 @@ public class main {
         get("/info", data::getData);
         get("/add", phoneTrack::addData);
         get("/timeline", timeline::getDataDate);
-
+        path("/stop", () -> {
+            post("/add", stopHandler::addStop);
+        });
     }
 
     public static ConfigItem getConfig(){
