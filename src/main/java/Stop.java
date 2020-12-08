@@ -1,24 +1,17 @@
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.ArrayList;
-
 public class Stop {
     private String name;
     private double lat;
     private double lon;
     private int radius;
+    private boolean userAdded;
 
 
-    public Stop(String name, double lat, double lon, int radius) {
+    public Stop(String name, double lat, double lon, int radius, boolean userAdded) {
         this.name = name;
         this.lat = lat;
         this.lon = lon;
         this.radius = radius;
+        this.userAdded = userAdded;
     }
 
     public String getName() {
@@ -35,5 +28,9 @@ public class Stop {
 
     public int getRadius() {
         return radius;
+    }
+
+    public boolean isUserAdded() {
+        return userAdded;
     }
 }

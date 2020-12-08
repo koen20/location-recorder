@@ -1,3 +1,4 @@
+import com.google.gson.Gson;
 import org.json.JSONObject;
 import spark.Request;
 import spark.Response;
@@ -18,7 +19,7 @@ public class StopHandler {
         String res = "";
         Stop stop = new Stop(request.queryParams("name"), Double.parseDouble(request.queryParams("lat")),
                 Double.parseDouble(request.queryParams("lon")),
-                Integer.parseInt(request.queryParamOrDefault("radius", "100")));
+                Integer.parseInt(request.queryParamOrDefault("radius", "100")), true);
         if (!Mysql.AddStop(stop)){
             response.status(500);
         }
@@ -26,10 +27,14 @@ public class StopHandler {
         return res;
     }
 
+    public String getStops(Request request, Response response){
+        Gson gson = new Gson();
+        return gson.toJson(Mysql.getStops());
+    }
+
     public static Stop getAddressName(double lat, double lon, ConfigItem configItem){
         ArrayList<Stop> stops = Mysql.stops;
         for(int i = 0; i < stops.size(); i++){
-            System.out.println(Timeline.distance(lat, stops.get(i).getLat(), lon, stops.get(i).getLon(), 0, 0));
             if (Timeline.distance(lat, stops.get(i).getLat(), lon, stops.get(i).getLon(), 0, 0) < stops.get(i).getRadius()) {
                 return stops.get(i);
             }
@@ -50,11 +55,10 @@ public class StopHandler {
         } else if (address.has("name")) {
             name = address.getString("name");
         }
-        Stop stop = new Stop(name, lat, lon, 0);
-        return stop;
+        return new Stop(name, lat, lon, 0, false);
     }
 
-    public static JSONObject getAddress(double lon, double lat, ConfigItem configItem) throws IOException {
+    public static JSONObject getAddress(double lat, double lon, ConfigItem configItem) throws IOException {
         //URL obj = new URL("http://photon.komoot.de/reverse?lon=" + lon + "&lat=" + lat);
         URL obj = new URL(configItem.getReverseGeocodeAddress().replace("LON", lon + "").replace("LAT", lat + ""));
         HttpURLConnection con = (HttpURLConnection) obj.openConnection();

@@ -43,7 +43,7 @@ public class Routes {
                 jsonArray.put(jsonObject);
 
             } catch (Exception e) {
-                e.printStackTrace();
+                //e.printStackTrace();
             }
         }
 

@@ -76,7 +76,6 @@ public class Timeline {
 
                         multiple = true;
                         added = false;
-                        System.out.println(rs.getTimestamp("date"));
                     }
                     count += 1;
                     latTot = latTot + rs.getDouble("lat");
@@ -105,12 +104,12 @@ public class Timeline {
     }
 
     public JSONObject add(double latTot, double lonTot, int count, Timestamp firstTime, Timestamp endTime) {
-        System.out.println("Add");
         JSONObject jsonObjectLoc = new JSONObject();
-        String name = StopHandler.getAddressName(round(lonTot / count, 5), round(latTot / count, 5), configItem).getName();
+        Stop stop = StopHandler.getAddressName(round(latTot / count, 5), round(lonTot / count, 5), configItem);
         jsonObjectLoc.put("start", firstTime.getTime());
         jsonObjectLoc.put("end", endTime.getTime());
-        jsonObjectLoc.put("location", name);
+        jsonObjectLoc.put("location", stop.getName());
+        jsonObjectLoc.put("locationUserAdded", stop.isUserAdded());
         jsonObjectLoc.put("lat", round(latTot / count, 5));
         jsonObjectLoc.put("lon", round(lonTot / count, 5));
         return jsonObjectLoc;

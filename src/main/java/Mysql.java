@@ -5,7 +5,7 @@ import java.util.TimerTask;
 
 public class Mysql {
     static Connection conn;
-    static ArrayList<Stop> stops;
+    static ArrayList<Stop> stops = new ArrayList<>();
 
     public Mysql(String server, String username, String password) {
         try {
@@ -21,12 +21,12 @@ public class Mysql {
     }
 
     public static ArrayList<Stop> getStops(){
-        ArrayList<Stop> stops = new ArrayList<>();
+        stops.clear();
         try {
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT * FROM stops");
             while (rs.next()){
-                Stop stop = new Stop(rs.getString("name"), rs.getDouble("lat"), rs.getDouble("lon"), rs.getInt("radius"));
+                Stop stop = new Stop(rs.getString("name"), rs.getDouble("lat"), rs.getDouble("lon"), rs.getInt("radius"), true);
                 stops.add(stop);
             }
         } catch (SQLException e) {

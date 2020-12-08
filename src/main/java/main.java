@@ -23,6 +23,7 @@ public class main {
         get("/timeline", timeline::getDataDate);
         path("/stop", () -> {
             post("/add", stopHandler::addStop);
+            get("/get", stopHandler::getStops);
         });
     }
 
