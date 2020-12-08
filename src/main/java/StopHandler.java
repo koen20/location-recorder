@@ -22,6 +22,7 @@ public class StopHandler {
         if (!Mysql.AddStop(stop)){
             response.status(500);
         }
+        Mysql.stops = Mysql.getStops();
         return res;
     }
 

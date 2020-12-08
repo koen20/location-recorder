@@ -12,6 +12,8 @@ public class Mysql {
             conn = DriverManager.getConnection(server, username, password);
             Timer updateTimer = new Timer();
             updateTimer.scheduleAtFixedRate(new checkMysqlConnection(), 2000, 60000);
+            Timer updateTimerStops = new Timer();
+            updateTimerStops.scheduleAtFixedRate(new updateTimerStops(), 21600000, 21600000);
             stops = getStops();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -65,6 +67,13 @@ public class Mysql {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private class updateTimerStops extends TimerTask {
+        @Override
+        public void run() {
+            stops = getStops();
         }
     }
 }
