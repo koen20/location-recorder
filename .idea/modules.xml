@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/owntracks-mysql.iml" filepath="$PROJECT_DIR$/.idea/owntracks-mysql.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/Owntracks-mysql-recorder.iml" filepath="$PROJECT_DIR$/.idea/Owntracks-mysql-recorder.iml" />
     </modules>
   </component>
 </project>
