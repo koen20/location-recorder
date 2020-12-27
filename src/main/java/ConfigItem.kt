@@ -1,59 +1,11 @@
-public class ConfigItem {
-    private String mqttServer;
-    private String mqttUsername;
-    private String mqttPassword;
-    private String mysqlServer;
-    private String[] owntracksTopic;
-    private String mysqlUsername;
-    private String mysqlPassword;
-    private int radiusLocation;
-    private String reverseGeocodeAddress;
-
-    public ConfigItem(String mqttServer, String mqttUsername, String mqttPassword, String mysqlServer, String[] owntrackTopic, String mysqlUsername, String mysqlPassword, int radiusLocation, String reverseGeocodeAddress) {
-        this.mqttServer = mqttServer;
-        this.mqttUsername = mqttUsername;
-        this.mqttPassword = mqttPassword;
-        this.mysqlServer = mysqlServer;
-        this.owntracksTopic = owntrackTopic;
-        this.mysqlUsername = mysqlUsername;
-        this.mysqlPassword = mysqlPassword;
-        this.radiusLocation = radiusLocation;
-        this.reverseGeocodeAddress = reverseGeocodeAddress;
-    }
-
-    public String getMqttServer() {
-        return mqttServer;
-    }
-
-    public String getMysqlServer() {
-        return mysqlServer;
-    }
-
-    public String[] getOwntrackTopic() {
-        return owntracksTopic;
-    }
-
-    public String getMysqlUsername() {
-        return mysqlUsername;
-    }
-
-    public String getMysqlPassword() {
-        return mysqlPassword;
-    }
-
-    public String getMqttUsername() {
-        return mqttUsername;
-    }
-
-    public String getMqttPassword() {
-        return mqttPassword;
-    }
-
-    public int getRadiusLocation() {
-        return radiusLocation;
-    }
-
-    public String getReverseGeocodeAddress() {
-        return reverseGeocodeAddress;
-    }
-}
+class ConfigItem(
+    val mqttServer: String,
+    val mqttUsername: String,
+    val mqttPassword: String,
+    val mysqlServer: String,
+    val owntrackTopic: Array<String>,
+    val mysqlUsername: String,
+    val mysqlPassword: String,
+    val radiusLocation: Int,
+    val reverseGeocodeAddress: String
+)

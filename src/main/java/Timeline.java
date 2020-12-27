@@ -3,18 +3,27 @@ import org.json.JSONObject;
 import spark.Request;
 import spark.Response;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.text.ParseException;
+import java.util.ArrayList;
 
 public class Timeline {
     ConfigItem configItem;
-    public Timeline(ConfigItem configItem) {
+    Mysql mysql;
+
+    public Timeline(ConfigItem configItem, Mysql mysql) {
         this.configItem = configItem;
+        this.mysql = mysql;
         //getData(1597968000, 1598054400);
     }
 
@@ -105,7 +114,7 @@ public class Timeline {
 
     public JSONObject add(double latTot, double lonTot, int count, Timestamp firstTime, Timestamp endTime) {
         JSONObject jsonObjectLoc = new JSONObject();
-        Stop stop = StopHandler.getAddressName(round(latTot / count, 5), round(lonTot / count, 5), configItem);
+        Stop stop = new Address().getAddressName(round(latTot / count, 5), round(lonTot / count, 5), configItem, mysql);
         jsonObjectLoc.put("start", firstTime.getTime());
         jsonObjectLoc.put("end", endTime.getTime());
         jsonObjectLoc.put("location", stop.getName());

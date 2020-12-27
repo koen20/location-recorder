@@ -2,14 +2,15 @@ import com.google.gson.Gson
 import spark.*
 import java.io.FileReader
 
+class Main
 
 fun main() {
     val configItem = getConfig()
-    val mysql = Mysql(configItem.mysqlServer, configItem.mysqlUsername, configItem.mysqlPassword)
+    val mysql = Mysql(configItem)
     val data = Data()
     val phoneTrack = PhoneTrack()
-    val stopHandler = StopHandler()
-    val timeline = Timeline(configItem)
+    val stopHandler = StopHandler(mysql)
+    val timeline = Timeline(configItem, mysql)
     Spark.port(9936)
 
     Spark.get("/info") { request: Request?, response: Response? -> data.getData(request!!, response!!) }
