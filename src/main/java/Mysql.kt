@@ -2,7 +2,7 @@ import java.sql.*
 import java.util.*
 import kotlin.collections.ArrayList
 
-class Mysql(configItem2: ConfigItem) {
+class Mysql(configItem: ConfigItem) {
     companion object {
         lateinit var conn: Connection
         var stops: ArrayList<Stop> = ArrayList()
@@ -26,8 +26,7 @@ class Mysql(configItem2: ConfigItem) {
     }
 
     init {
-        configItem = configItem2
-        conn = DriverManager.getConnection(configItem2.mysqlServer, configItem2.mysqlUsername, configItem2.mysqlPassword)
+        conn = DriverManager.getConnection(configItem.mysqlServer, configItem.mysqlUsername, configItem.mysqlPassword)
         val updateTimer = Timer()
         updateTimer.scheduleAtFixedRate(checkMysqlConnection(), 2000, 60000)
         val updateTimerStops = Timer()
