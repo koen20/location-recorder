@@ -11,12 +11,19 @@ class Mysql(configItem: ConfigItem) {
         fun getStopsDb(): ArrayList<Stop> {
             stops.clear()
             try {
-                val stmt = conn.createStatement()
-                val rs = stmt.executeQuery("SELECT * FROM stops")
-                while (rs.next()) {
-                    val stop =
-                        Stop(rs.getString("name"), rs.getDouble("lat"), rs.getDouble("lon"), rs.getInt("radius"), true)
-                    stops.add(stop)
+                conn.createStatement().use { stmt ->
+                    stmt.executeQuery("SELECT * FROM stops").use { rs ->
+                        while (rs.next()) {
+                            val stop = Stop(
+                                rs.getString("name"),
+                                rs.getDouble("lat"),
+                                rs.getDouble("lon"),
+                                rs.getInt("radius"),
+                                true
+                            )
+                            stops.add(stop)
+                        }
+                    }
                 }
             } catch (e: SQLException) {
                 e.printStackTrace()
@@ -34,18 +41,21 @@ class Mysql(configItem: ConfigItem) {
         stops = getStopsDb()
     }
 
+    fun disconnect(){
+        conn.close()
+    }
 
     fun AddStop(stop: Stop): Boolean {
         var added = false
         try {
             val insert = "INSERT INTO stops VALUES(NULL, ?, ?, ?, ?)"
-            val ps = conn.prepareStatement(insert)
-            ps.setString(1, stop.name)
-            ps.setDouble(2, stop.lat)
-            ps.setDouble(3, stop.lon)
-            ps.setInt(4, stop.radius)
-            ps.execute()
-            ps.close()
+            conn.prepareStatement(insert).use { ps ->
+                ps.setString(1, stop.name)
+                ps.setDouble(2, stop.lat)
+                ps.setDouble(3, stop.lon)
+                ps.setInt(4, stop.radius)
+                ps.execute()
+            }
             added = true
         } catch (exception: SQLException) {
             exception.printStackTrace()
@@ -53,11 +63,24 @@ class Mysql(configItem: ConfigItem) {
         return added
     }
 
-    fun updateStops(){
+    fun getData(startTime: Long, endTime: Long): ArrayList<LocationItem> {
+        val data = ArrayList<LocationItem>()
+        conn.createStatement().use { stmt ->
+            stmt.executeQuery("SELECT * FROM data WHERE date BETWEEN '${Mqtt.getMysqlDateString(startTime)}' AND '${Mqtt.getMysqlDateString(endTime)}'").use { rs ->
+                while (rs.next()) {
+                    data.add(LocationItem(rs.getTimestamp("date"), rs.getDouble("lat"), rs.getDouble("lon")))
+                }
+            }
+        }
+
+        return data
+    }
+
+    fun updateStops() {
         stops = getStopsDb()
     }
 
-    fun getStops():ArrayList<Stop>{
+    fun getStops(): ArrayList<Stop> {
         return stops
     }
 

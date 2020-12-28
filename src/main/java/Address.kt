@@ -1,7 +1,7 @@
 import org.json.JSONObject
 import java.io.BufferedReader
-import java.io.IOException
 import java.io.InputStreamReader
+import java.lang.Exception
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.ArrayList
@@ -18,8 +18,8 @@ class Address {
         var address = JSONObject()
         try {
             address = getAddress(lat, lon, configItem)
-        } catch (e: IOException) {
-            e.printStackTrace()
+        } catch (e: Exception) {
+            println("Failed to get address from Openstreetmap")
         }
         var name = ""
         if (address.has("street")) {
@@ -33,7 +33,7 @@ class Address {
         return Stop(name, lat, lon, 0, false)
     }
 
-    @Throws(IOException::class)
+    @Throws(Exception::class)
     fun getAddress(lat: Double, lon: Double, configItem: ConfigItem): JSONObject {
         //URL obj = new URL("http://photon.komoot.de/reverse?lon=" + lon + "&lat=" + lat);
         val obj = URL(

@@ -9,6 +9,7 @@ import java.sql.Timestamp
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.ArrayList
 
 class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
     fun getDataDate(request: Request, response: Response): String {
@@ -19,7 +20,7 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
 
         try {
             dt = sdf.parse(request.queryParams("date"))
-            res = getData(dt.time / 1000, (dt.time + 86400000) / 1000).toString()
+            res = getData(mysql.getData(dt.time / 1000, (dt.time + 86400000) / 1000)).toString()
         } catch (e: ParseException) {
             println("asodf")
             e.printStackTrace()
@@ -28,77 +29,64 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
         return res
     }
 
-    fun getData(start: Long, end: Long): JSONObject{
+    fun getData(locationItems: ArrayList<LocationItem>): JSONObject {
         val jsonArray = JSONArray()
         val jsonArrayAll = JSONArray()
-        var jsonArrayRoutes = JSONArray()
         val jsonObjectRes = JSONObject()
 
-        try {
-            val stmt = Mysql.conn.createStatement()
-            val rs = stmt.executeQuery(
-                """SELECT * FROM data WHERE date BETWEEN '${Mqtt.getMysqlDateString(start)}' AND '${
-                    Mqtt.getMysqlDateString(end)
-                }'"""
-            )
-            var lat = 0.0
-            var lon = 0.0
-            var time: Long = 0
-            var multiple = true
-            var added = true
-            var count = 0
-            var latTot = 0.0
-            var lonTot = 0.0
-            var firstTime: Timestamp? = null
-            var endTime: Timestamp? = null
-            while (rs.next()) {
-                if (distance(lat, rs.getDouble("lat"), lon, rs.getDouble("lon"), 0.0, 0.0) >= configItem.radiusLocation) {
-                    time = rs.getTimestamp("date").time
-                    multiple = false
-                    if (!added) {
-                        jsonArray.put(add(latTot, lonTot, count, firstTime!!, endTime!!))
-                        added = true
-                    }
-                    count = 0
-                    latTot = 0.0
-                    lonTot = 0.0
-                    firstTime = rs.getTimestamp("date")
-                    lat = rs.getDouble("lat")
-                    lon = rs.getDouble("lon")
+        var lat = 0.0
+        var lon = 0.0
+        var time: Long = 0
+        var multiple = true
+        var added = true
+        var count = 0
+        var latTot = 0.0
+        var lonTot = 0.0
+        var firstTime: Timestamp? = null
+        var endTime: Timestamp? = null
+        locationItems.forEach { item ->
+            if (distance(lat, item.lat, lon, item.lon, 0.0, 0.0) >= configItem.radiusLocation) {
+                time = item.date.time
+                multiple = false
+                if (!added) {
+                    jsonArray.put(add(latTot, lonTot, count, firstTime!!, endTime!!))
+                    added = true
                 }
-                if (distance(lat, rs.getDouble("lat"), lon, rs.getDouble("lon"), 0.0, 0.0) < configItem.radiusLocation) {
-                    if (rs.getTimestamp("date").time - time > 420000 && !multiple) {
-                        multiple = true
-                        added = false
-                    }
-                    count += 1
-                    latTot += rs.getDouble("lat")
-                    lonTot += rs.getDouble("lon")
-                    endTime = rs.getTimestamp("date")
+                count = 0
+                latTot = 0.0
+                lonTot = 0.0
+                firstTime = item.date
+                lat = item.lat
+                lon = item.lon
+            }
+            if (distance(lat, item.lat, lon, item.lon, 0.0, 0.0) < configItem.radiusLocation) {
+                if (item.date.time - time > 420000 && !multiple) {
+                    multiple = true
+                    added = false
                 }
-                jsonArrayAll.put(JSONObject().apply {
-                    put("date", rs.getTimestamp("date").time)
-                    put("lat", rs.getDouble("lat"))
-                    put("lon", rs.getDouble("lon"))
-                })
+                count += 1
+                latTot += item.lat
+                lonTot += item.lon
+                endTime = item.date
             }
-            if (!added) {
-                jsonArray.put(add(latTot, lonTot, count, firstTime!!, endTime!!))
-            }
-            rs.close()
-            stmt.close()
-            jsonArrayRoutes = Routes().getRouteFromStop(jsonArray, jsonArrayAll)
-        } catch (exception: SQLException) {
-            exception.printStackTrace()
+            jsonArrayAll.put(JSONObject().apply {
+                put("date", item.date.time)
+                put("lat", item.lat)
+                put("lon", item.lon)
+            })
+        }
+        if (!added) {
+            jsonArray.put(add(latTot, lonTot, count, firstTime!!, endTime!!))
         }
 
+        val jsonArrayRoutes = Routes().getRouteFromStop(jsonArray, jsonArrayAll)
         jsonObjectRes.put("routes", jsonArrayRoutes)
         jsonObjectRes.put("stops", jsonArray)
 
         return jsonObjectRes
     }
 
-    fun add(latTot: Double, lonTot: Double, count: Int, firstTime: Timestamp, endTime: Timestamp): JSONObject {
+    private fun add(latTot: Double, lonTot: Double, count: Int, firstTime: Timestamp, endTime: Timestamp): JSONObject {
         val stop = Address().getAddressName(
             round(latTot / count, 5),
             round(lonTot / count, 5),
@@ -117,10 +105,7 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
     }
 
     companion object {
-        fun distance(
-            lat1: Double, lat2: Double, lon1: Double,
-            lon2: Double, el1: Double, el2: Double
-        ): Double {
+        fun distance(lat1: Double, lat2: Double, lon1: Double, lon2: Double, el1: Double, el2: Double): Double {
             val R = 6371 // Radius of the earth
             val latDistance = Math.toRadians(lat2 - lat1)
             val lonDistance = Math.toRadians(lon2 - lon1)

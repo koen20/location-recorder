@@ -7,7 +7,7 @@ class Main
 fun main() {
     val configItem = getConfig()
     val mysql = Mysql(configItem)
-    val data = Data()
+    val data = Data(mysql)
     val phoneTrack = PhoneTrack()
     val stopHandler = StopHandler(mysql)
     val timeline = Timeline(configItem, mysql)
