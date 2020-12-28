@@ -1,32 +1,14 @@
 import org.json.JSONArray
 import org.json.JSONObject
-import spark.Request
-import spark.Response
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.sql.SQLException
 import java.sql.Timestamp
-import java.text.ParseException
-import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 
 class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
-    fun getDataDate(request: Request, response: Response): String {
-        var res = ""
-        val dt: Date
-
-        val sdf = SimpleDateFormat("yyyy-MM-dd")
-
-        try {
-            dt = sdf.parse(request.queryParams("date"))
-            res = getData(mysql.getData(dt.time / 1000, (dt.time + 86400000) / 1000)).toString()
-        } catch (e: ParseException) {
-            println("asodf")
-            e.printStackTrace()
-        }
-        println(res)
-        return res
+    fun getDataDate(dt: Date): String {
+        return getData(mysql.getData(dt.time / 1000, (dt.time + 86400000) / 1000)).toString()
     }
 
     fun getData(locationItems: ArrayList<LocationItem>): JSONObject {

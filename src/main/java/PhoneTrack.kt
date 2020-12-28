@@ -1,40 +1,42 @@
-import spark.Request
-import spark.Response
+import io.ktor.application.*
+import io.ktor.http.*
+import io.ktor.response.*
+import io.ktor.routing.*
 import java.lang.Exception
 import java.sql.SQLException
 
-class PhoneTrack {
-
-    fun addData(request: Request, response: Response): String {
-        try {
-            val tst = Mqtt.getMysqlDateString(request.queryParams("timestamp").toLong())
-            val stmt = Mysql.conn.createStatement()
-            val alt = request.queryParams("alt")
-            if (alt == "") {
-                stmt.executeUpdate(
-                    "INSERT INTO data VALUES (NULL, '" + tst + "', '"
-                            + request.queryParams("lat") + "', '" + request.queryParams("lon") + "'" +
-                            ", NULL, '" + request.queryParams("acc")
-                            + "',  '" + request.queryParams("batt") + "', '" + request.queryParams("tid") + "')"
-                )
-            } else {
-                stmt.executeUpdate(
-                    ("INSERT INTO data VALUES (NULL, '" + tst + "', '"
-                            + request.queryParams("lat") + "', '" + request.queryParams("lon") + "'" +
-                            ", '" + alt + "', '" + request.queryParams("acc")
-                            + "',  '" + request.queryParams("batt") + "', '" + request.queryParams("tid") + "')")
-                )
-            }
-            stmt.close()
-        } catch (e: Exception) {
-            e.printStackTrace()
+fun Route.addPhoneTrackLocation(mysql: Mysql){
+    route("/add") {
+        get {
             try {
-                println(Mysql.conn.isValid(3000))
-            } catch (ex: SQLException) {
-                ex.printStackTrace()
+                val tst = Mqtt.getMysqlDateString(call.parameters["timestamp"]!!.toLong())
+                val stmt = Mysql.conn.createStatement()
+                val alt = call.parameters["alt"]!!
+                if (alt == "") {
+                    stmt.executeUpdate(
+                        "INSERT INTO data VALUES (NULL, '" + tst + "', '"
+                                + call.parameters["lat"]!! + "', '" + call.parameters["lon"]!! + "'" +
+                                ", NULL, '" + call.parameters["acc"]!!
+                                + "',  '" + call.parameters["batt"]!! + "', '" + call.parameters["tid"]!! + "')"
+                    )
+                } else {
+                    stmt.executeUpdate(
+                        ("INSERT INTO data VALUES (NULL, '" + tst + "', '"
+                                + call.parameters["lat"]!! + "', '" + call.parameters["lon"]!! + "'" +
+                                ", '" + alt + "', '" + call.parameters["acc"]!!
+                                + "',  '" + call.parameters["batt"]!! + "', '" + call.parameters["tid"]!! + "')")
+                    )
+                }
+                stmt.close()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                try {
+                    println(Mysql.conn.isValid(3000))
+                } catch (ex: SQLException) {
+                    ex.printStackTrace()
+                }
+                call.respondText("Insert failed", status = HttpStatusCode.InternalServerError)
             }
-            response.status(500)
         }
-        return ""
     }
 }

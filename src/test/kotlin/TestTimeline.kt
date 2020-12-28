@@ -1,11 +1,13 @@
+import com.google.gson.Gson
 import org.junit.Assert
 import org.junit.Test
+import java.io.FileReader
 import java.sql.Timestamp
 
 class TestTimeline {
     @Test
     fun testTimeline() {
-        val configItem = getConfig()
+        val configItem = Gson().fromJson(FileReader("config.json"), ConfigItem::class.java)
         val mysql = Mysql(configItem)
         val items = ArrayList<LocationItem>().apply {
             add(LocationItem(Timestamp(1609168993000), 35.686546, -29.627341))
