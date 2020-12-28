@@ -18,7 +18,7 @@ apply plugin: 'application'
 group 'nl.koenhabets.owntracks-mysql'
 version '1.0'
 
-mainClassName = 'main'
+mainClassName = 'io.ktor.server.netty.EngineMain'
 
 sourceCompatibility = 1.8
 
