@@ -28,6 +28,7 @@ fun Route.addPhoneTrackLocation(mysql: Mysql){
                     )
                 }
                 stmt.close()
+                call.respondText("added")
             } catch (e: Exception) {
                 e.printStackTrace()
                 try {
