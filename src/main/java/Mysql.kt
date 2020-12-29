@@ -33,16 +33,25 @@ class Mysql(configItem: ConfigItem) {
     }
 
     init {
-        conn = DriverManager.getConnection(configItem.mysqlServer, configItem.mysqlUsername, configItem.mysqlPassword)
+        try {
+            conn =
+                DriverManager.getConnection(configItem.mysqlServer, configItem.mysqlUsername, configItem.mysqlPassword)
+            stops = getStopsDb()
+        } catch (e: SQLNonTransientConnectionException) {
+            e.printStackTrace()
+        }
         val updateTimer = Timer()
         updateTimer.scheduleAtFixedRate(checkMysqlConnection(), 2000, 60000)
         val updateTimerStops = Timer()
-        updateTimerStops.scheduleAtFixedRate(updateTimerStops(), 21600000, 21600000)
-        stops = getStopsDb()
+        updateTimerStops.scheduleAtFixedRate(updateTimerStops(), 120000, 21600000)
     }
 
-    fun disconnect(){
-        conn.close()
+    fun disconnect() {
+        try {
+            conn.close()
+        } catch (e: Exception){
+
+        }
     }
 
     fun AddStop(stop: Stop): Boolean {
@@ -66,7 +75,13 @@ class Mysql(configItem: ConfigItem) {
     fun getData(startTime: Long, endTime: Long): ArrayList<LocationItem> {
         val data = ArrayList<LocationItem>()
         conn.createStatement().use { stmt ->
-            stmt.executeQuery("SELECT * FROM data WHERE date BETWEEN '${Mqtt.getMysqlDateString(startTime)}' AND '${Mqtt.getMysqlDateString(endTime)}'").use { rs ->
+            stmt.executeQuery(
+                "SELECT * FROM data WHERE date BETWEEN '${Mqtt.getMysqlDateString(startTime)}' AND '${
+                    Mqtt.getMysqlDateString(
+                        endTime
+                    )
+                }'"
+            ).use { rs ->
                 while (rs.next()) {
                     data.add(LocationItem(rs.getTimestamp("date"), rs.getDouble("lat"), rs.getDouble("lon")))
                 }
