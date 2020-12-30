@@ -10,6 +10,7 @@ class Routes {
                 val item = stops.getJSONObject(i)
                 val itemS = stops.getJSONObject(i + 1)
                 var distanceTot = 0.0
+                var pointCount = 0
                 var lastLat = item.getDouble("lat")
                 var lastLon = item.getDouble("lon")
                 for (k in 0 until all.length()) { //loop through all locations
@@ -21,6 +22,7 @@ class Routes {
                         )
                         lastLat = item2.getDouble("lat")
                         lastLon = item2.getDouble("lon")
+                        pointCount += 1
                     }
                 }
                 val time = (itemS.getLong("start") - item.getLong("end")).toDouble()
@@ -33,15 +35,17 @@ class Routes {
                 } else if (speed >= 9) {
                     movementType = "driving"
                 }
-
                 jsonArray.put(JSONObject().apply {
                     put("start", item.getLong("end"))
                     put("end", itemS.getLong("start"))
                     put("route", item.getString("location") + " - " + itemS.getString("location"))
+                    put("startLocation", item.getString("location"))
+                    put("stopLocation", itemS.getString("location"))
                     put("distance", distanceTot)
                     put("time", time)
                     put("speed", speed)
                     put("movementType", movementType)
+                    put("pointCount", pointCount)
                 })
             } catch (exception: Exception){
                 exception.printStackTrace()

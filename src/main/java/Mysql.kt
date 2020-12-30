@@ -37,11 +37,11 @@ class Mysql(configItem: ConfigItem) {
             conn =
                 DriverManager.getConnection(configItem.mysqlServer, configItem.mysqlUsername, configItem.mysqlPassword)
             stops = getStopsDb()
-        } catch (e: SQLNonTransientConnectionException) {
-            e.printStackTrace()
+        } catch (e: Exception) {
+            println("Failed to connect to database $e")
         }
         val updateTimer = Timer()
-        updateTimer.scheduleAtFixedRate(checkMysqlConnection(), 2000, 60000)
+        updateTimer.scheduleAtFixedRate(checkMysqlConnection(), 10000, 60000)
         val updateTimerStops = Timer()
         updateTimerStops.scheduleAtFixedRate(updateTimerStops(), 120000, 21600000)
     }
@@ -109,8 +109,8 @@ class Mysql(configItem: ConfigItem) {
                         configItem.mysqlUsername, configItem.mysqlPassword
                     )
                 }
-            } catch (e: SQLException) {
-                e.printStackTrace()
+            } catch (e: Exception) {
+                println("Failed to connect to database $e")
             }
         }
     }
