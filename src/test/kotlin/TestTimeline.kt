@@ -21,9 +21,10 @@ class TestTimeline {
         }
         val data = Timeline(configItem, mysql).getData(items)
         mysql.disconnect()
-        Assert.assertEquals(
-            "{\"routes\":[{\"pointCount\":2,\"route\":\" - \",\"startLocation\":\"\",\"distance\":111195.38050108914,\"movementType\":\"driving\",\"stopLocation\":\"\",\"start\":1609170013000,\"end\":1609170015000,\"time\":2000,\"speed\":200151.68490196043}],\"stops\":[{\"locationUserAdded\":false,\"savedLocationId\":0,\"start\":1609168993000,\"end\":1609170013000,\"location\":\"\",\"lon\":-29.62734,\"osDataId\":0,\"lat\":35.68655},{\"locationUserAdded\":false,\"savedLocationId\":0,\"start\":1609170015000,\"end\":1609191015000,\"location\":\"\",\"lon\":-29.62734,\"osDataId\":0,\"lat\":36.68655}]}",
-            data.toString()
-        )
+        var valid = true
+        if (data.getJSONArray("routes").length() == 1 && data.getJSONArray("stops").length() == 2){
+            valid = false
+        }
+        Assert.assertFalse(valid)
     }
 }

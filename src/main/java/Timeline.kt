@@ -10,7 +10,7 @@ import kotlin.collections.ArrayList
 
 class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
     fun getDataDate(dt: Date): String {
-        return getData(mysql.getData(dt.time / 1000 - 15778463, (dt.time + 86400000) / 1000)).toString()
+        return getData(mysql.getData(dt.time / 1000, (dt.time + 86400000) / 1000)).toString()
     }
 
     fun getData(locationItems: ArrayList<LocationItem>): JSONObject {
