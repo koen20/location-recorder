@@ -34,8 +34,6 @@ class Address {
         //add fetched address to db
         if (name != ""){
             val timestamp = Timestamp(Date().time)
-            println(timestamp.toString())
-            println(timestamp)
             mysql.addOsAddress(OsAddressItem(0, name, lat, lon, timestamp))
         }
 

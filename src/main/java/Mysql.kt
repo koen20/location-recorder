@@ -1,3 +1,5 @@
+import model.OsAddressItem
+import model.Stop
 import java.sql.*
 import java.util.*
 import kotlin.collections.ArrayList
@@ -91,6 +93,25 @@ class Mysql(configItem: ConfigItem) {
                 ps.setInt(4, stop.radius)
                 ps.execute()
             }
+            added = true
+        } catch (exception: SQLException) {
+            exception.printStackTrace()
+        }
+        return added
+    }
+
+    fun addOsAddress(item: OsAddressItem): Boolean{
+        var added = false
+        try {
+            val insert = "INSERT INTO osData VALUES(NULL, ?, ?, ?, ?)"
+            conn.prepareStatement(insert).use { ps ->
+                ps.setString(1, item.name)
+                ps.setDouble(2, item.lat)
+                ps.setDouble(3, item.lon)
+                ps.setTimestamp(4, item.dateFetched)
+                ps.execute()
+            }
+            osAddressItems.add(item)
             added = true
         } catch (exception: SQLException) {
             exception.printStackTrace()
