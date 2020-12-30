@@ -63,8 +63,6 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
         }
 
         val jsonArrayRoutes = Routes().getRouteFromStop(jsonArray, jsonArrayAll)
-        jsonObjectRes.put("routes", jsonArrayRoutes)
-        jsonObjectRes.put("stops", jsonArray)
 
         //remove parts with possible inaccurate gps data
         try {
@@ -92,6 +90,9 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+
+        jsonObjectRes.put("routes", jsonArrayRoutes)
+        jsonObjectRes.put("stops", jsonArray)
 
         return jsonObjectRes
     }

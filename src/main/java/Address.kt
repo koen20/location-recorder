@@ -25,26 +25,29 @@ class Address {
         }
 
         var name = ""
+        var fetched: OsAddressItem? = null
         try {
-            name = getAddress(lat, lon, configItem)
+            fetched = getAddress(lat, lon, configItem)
         } catch (e: Exception) {
             println("Failed to get address from Openstreetmap")
         }
 
         //add fetched address to db
-        if (name != ""){
-            val timestamp = Timestamp(Date().time)
-            mysql.addOsAddress(OsAddressItem(0, name, lat, lon, timestamp))
+        if (fetched != null){
+            if (fetched.name != "") {
+                name = fetched.name
+                mysql.addOsAddress(fetched)
+            }
         }
 
         return Stop(name, lat, lon, 0, false)
     }
 
-    //get addresses from Mysql.kt and return if items exists within 6 meter radius
+    //get addresses from Mysql.kt and return if items exists within 40 meter radius
     fun checkDbAddress(mysql: Mysql, lat: Double, lon: Double): OsAddressItem?{
         val addresses = mysql.getOsAddressItems()
         addresses.forEach {
-            if (Timeline.distance(lat, it.lat, lon, it.lon, 0.0, 0.0) < 7){
+            if (Timeline.distance(lat, it.lat, lon, it.lon, 0.0, 0.0) < 41){
                 return it
             }
         }
@@ -52,7 +55,7 @@ class Address {
     }
 
     @Throws(Exception::class)
-    fun getAddress(lat: Double, lon: Double, configItem: ConfigItem): String {
+    fun getAddress(lat: Double, lon: Double, configItem: ConfigItem): OsAddressItem {
         val obj = URL(
             configItem.reverseGeocodeAddress.replace("LON", lon.toString() + "").replace("LAT", lat.toString() + "")
         )
@@ -72,16 +75,30 @@ class Address {
             JSONObject(response.toString()).getJSONArray("features").getJSONObject(0).getJSONObject("properties")
 
         var name = ""
+        var city = ""
+        var country = ""
         if (jsonObject.has("street")) {
             name = jsonObject.getString("street")
             if (jsonObject.has("housenumber")) {
                 name = name + " " + jsonObject.getString("housenumber")
             }
+            if (jsonObject.has("city")){
+                city = jsonObject.getString("city")
+            }
+            if (jsonObject.has("country")){
+                country = jsonObject.getString("country")
+            }
         } else if (jsonObject.has("name")) {
             name = jsonObject.getString("name")
+            if (jsonObject.has("city")){
+                city = jsonObject.getString("city")
+            }
+            if (jsonObject.has("country")){
+                country = jsonObject.getString("country")
+            }
         }
 
-        return name
+        return OsAddressItem(0, name, lat, lon, Timestamp(Date().time), city, country)
     }
 
 }

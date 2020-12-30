@@ -27,7 +27,7 @@ class Routes {
                 }
                 val time = (itemS.getLong("start") - item.getLong("end")).toDouble()
                 val timeHours = time / 1000 / 60 / 60
-                val speed = distanceTot / 1000.0 / timeHours
+                var speed = distanceTot / 1000.0 / timeHours
 
                 var movementType = "unknown"
                 if (speed < 9) {
@@ -35,6 +35,11 @@ class Routes {
                 } else if (speed >= 9) {
                     movementType = "driving"
                 }
+
+                if (timeHours == 0.0){
+                    speed = 0.0
+                }
+
                 jsonArray.put(JSONObject().apply {
                     put("start", item.getLong("end"))
                     put("end", itemS.getLong("start"))

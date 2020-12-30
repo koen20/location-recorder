@@ -45,7 +45,9 @@ class Mysql(configItem: ConfigItem) {
                                 rs.getString("name"),
                                 rs.getDouble("lat"),
                                 rs.getDouble("lon"),
-                                rs.getTimestamp("dateFetched")
+                                rs.getTimestamp("dateFetched"),
+                                rs.getString("city"),
+                                rs.getString("country")
                             )
                             items.add(addressItem)
                         }
@@ -103,12 +105,14 @@ class Mysql(configItem: ConfigItem) {
     fun addOsAddress(item: OsAddressItem): Boolean{
         var added = false
         try {
-            val insert = "INSERT INTO osData VALUES(NULL, ?, ?, ?, ?)"
+            val insert = "INSERT INTO osData VALUES(NULL, ?, ?, ?, ?, ?, ?)"
             conn.prepareStatement(insert).use { ps ->
                 ps.setString(1, item.name)
                 ps.setDouble(2, item.lat)
                 ps.setDouble(3, item.lon)
                 ps.setTimestamp(4, item.dateFetched)
+                ps.setString(5, item.city)
+                ps.setString(6, item.country)
                 ps.execute()
             }
             osAddressItems.add(item)
