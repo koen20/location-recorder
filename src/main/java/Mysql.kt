@@ -1,5 +1,3 @@
-import model.OsAddressItem
-import model.Stop
 import java.sql.*
 import java.util.*
 import kotlin.collections.ArrayList
@@ -60,17 +58,26 @@ class Mysql(configItem: ConfigItem) {
     }
 
     init {
-        conn = DriverManager.getConnection(configItem.mysqlServer, configItem.mysqlUsername, configItem.mysqlPassword)
+        try {
+            conn =
+                DriverManager.getConnection(configItem.mysqlServer, configItem.mysqlUsername, configItem.mysqlPassword)
+            stops = getStopsDb()
+            osAddressItems = getOsAddressDb()
+        } catch (e: Exception) {
+            println("Failed to connect to database $e")
+        }
         val updateTimer = Timer()
-        updateTimer.scheduleAtFixedRate(checkMysqlConnection(), 2000, 60000)
+        updateTimer.scheduleAtFixedRate(checkMysqlConnection(), 10000, 60000)
         val updateTimerStops = Timer()
-        updateTimerStops.scheduleAtFixedRate(updateTimerStops(), 21600000, 21600000)
-        stops = getStopsDb()
-        osAddressItems = getOsAddressDb()
+        updateTimerStops.scheduleAtFixedRate(updateTimerStops(), 120000, 21600000)
     }
 
     fun disconnect() {
-        conn.close()
+        try {
+            conn.close()
+        } catch (e: Exception){
+
+        }
     }
 
     fun addStop(stop: Stop): Boolean {
@@ -84,26 +91,6 @@ class Mysql(configItem: ConfigItem) {
                 ps.setInt(4, stop.radius)
                 ps.execute()
             }
-            stops.add(stop)
-            added = true
-        } catch (exception: SQLException) {
-            exception.printStackTrace()
-        }
-        return added
-    }
-
-    fun addOsAddress(item: OsAddressItem): Boolean{
-        var added = false
-        try {
-            val insert = "INSERT INTO osData VALUES(NULL, ?, ?, ?, ?)"
-            conn.prepareStatement(insert).use { ps ->
-                ps.setString(1, item.name)
-                ps.setDouble(2, item.lat)
-                ps.setDouble(3, item.lon)
-                ps.setTimestamp(4, item.dateFetched)
-                ps.execute()
-            }
-            osAddressItems.add(item)
             added = true
         } catch (exception: SQLException) {
             exception.printStackTrace()
@@ -114,13 +101,7 @@ class Mysql(configItem: ConfigItem) {
     fun getData(startTime: Long, endTime: Long): ArrayList<LocationItem> {
         val data = ArrayList<LocationItem>()
         conn.createStatement().use { stmt ->
-            stmt.executeQuery(
-                "SELECT * FROM data WHERE date BETWEEN '${Mqtt.getMysqlDateString(startTime)}' AND '${
-                    Mqtt.getMysqlDateString(
-                        endTime
-                    )
-                }'"
-            ).use { rs ->
+            stmt.executeQuery("SELECT * FROM data WHERE date BETWEEN '${Mqtt.getMysqlDateString(startTime)}' AND '${Mqtt.getMysqlDateString(endTime)}'").use { rs ->
                 while (rs.next()) {
                     data.add(LocationItem(rs.getTimestamp("date"), rs.getDouble("lat"), rs.getDouble("lon")))
                 }
@@ -128,6 +109,10 @@ class Mysql(configItem: ConfigItem) {
         }
 
         return data
+    }
+
+    fun updateStops() {
+        stops = getStopsDb()
     }
 
     fun getStops(): ArrayList<Stop> {

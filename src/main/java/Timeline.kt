@@ -1,5 +1,6 @@
 import org.json.JSONArray
 import org.json.JSONObject
+import java.lang.Exception
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.sql.Timestamp
@@ -64,6 +65,33 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
         val jsonArrayRoutes = Routes().getRouteFromStop(jsonArray, jsonArrayAll)
         jsonObjectRes.put("routes", jsonArrayRoutes)
         jsonObjectRes.put("stops", jsonArray)
+
+        //remove parts with possible inaccurate gps data
+        try {
+            var index = 0
+            var lastIndex = jsonArrayRoutes.length() - 1
+
+            //loop through all routes
+            while (index <= lastIndex && lastIndex >= 0) {
+                val item = jsonArrayRoutes.getJSONObject(index)
+                if (item.getInt("pointCount") <= 4 && item.getDouble("distance") < 400 &&
+                    item.getString("startLocation") == item.getString("stopLocation")
+                ) {
+                    for (k in 0 until jsonArray.length() - 1) {
+                        val itemStop = jsonArray.getJSONObject(k)
+                        if (itemStop.getLong("end") == item.getLong("start")) {//get the stop before the route that is being removed
+                            jsonArrayRoutes.remove(index)
+                            jsonArray.getJSONObject(k).put("end", jsonArray.getJSONObject(k + 1).getLong("end"))
+                            jsonArray.remove(k + 1)
+                            lastIndex--
+                        }
+                    }
+                }
+                index++
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
 
         return jsonObjectRes
     }
