@@ -1,3 +1,4 @@
+import model.Location
 import org.json.JSONArray
 import org.json.JSONObject
 import java.lang.Exception
@@ -9,7 +10,7 @@ import kotlin.collections.ArrayList
 
 class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
     fun getDataDate(dt: Date): String {
-        return getData(mysql.getData(dt.time / 1000, (dt.time + 86400000) / 1000)).toString()
+        return getData(mysql.getData(dt.time / 1000 - 15778463, (dt.time + 86400000) / 1000)).toString()
     }
 
     fun getData(locationItems: ArrayList<LocationItem>): JSONObject {
@@ -94,6 +95,19 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
         jsonObjectRes.put("routes", jsonArrayRoutes)
         jsonObjectRes.put("stops", jsonArray)
 
+        /*for (g in 0 until jsonArray.length() - 1) {
+            val item = jsonArray.getJSONObject(g)
+            mysql.addLocation(
+                Location(
+                    0,
+                    Timestamp(item.getLong("start")),
+                    Timestamp(item.getLong("end")),
+                    item.getInt("osDataId"),
+                    item.getInt("savedLocationId")
+                )
+            )
+        }*/
+
         return jsonObjectRes
     }
 
@@ -112,6 +126,8 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
             put("locationUserAdded", stop.isUserAdded)
             put("lat", round(latTot / count, 5))
             put("lon", round(lonTot / count, 5))
+            put("osDataId", stop.osDataId)
+            put("savedLocationId", stop.savedLocationId)
         }
     }
 

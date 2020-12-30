@@ -4,6 +4,7 @@ import io.ktor.http.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import model.Stop
+import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -29,7 +30,11 @@ fun Route.data(mysql: Mysql, configItem: ConfigItem) {
                 "Missing date",
                 status = HttpStatusCode.BadRequest
             )
-            call.respondText(Timeline(configItem, mysql).getDataDate(df.parse(date)))
+            try {
+                call.respondText(Timeline(configItem, mysql).getDataDate(df.parse(date)))
+            } catch (e: Exception){
+                e.printStackTrace()
+            }
         }
     }
 
@@ -43,7 +48,7 @@ fun Route.data(mysql: Mysql, configItem: ConfigItem) {
                 radius = call.parameters["date"]!!.toInt()
             }
             val stop = Stop(
-                call.parameters["name"]!!, call.parameters["lat"]!!.toDouble(),
+                0, call.parameters["name"]!!, call.parameters["lat"]!!.toDouble(),
                 call.parameters["lon"]!!.toDouble(), radius, true
             )
 

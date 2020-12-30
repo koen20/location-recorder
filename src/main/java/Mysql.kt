@@ -1,3 +1,4 @@
+import model.Location
 import model.OsAddressItem
 import model.Stop
 import java.sql.*
@@ -18,6 +19,7 @@ class Mysql(configItem: ConfigItem) {
                     stmt.executeQuery("SELECT * FROM stops").use { rs ->
                         while (rs.next()) {
                             val stop = Stop(
+                                rs.getInt("id"),
                                 rs.getString("name"),
                                 rs.getDouble("lat"),
                                 rs.getDouble("lon"),
@@ -96,6 +98,34 @@ class Mysql(configItem: ConfigItem) {
                 ps.execute()
             }
             added = true
+            updateStops()
+        } catch (exception: SQLException) {
+            exception.printStackTrace()
+        }
+        return added
+    }
+
+    fun addLocation(location: Location): Boolean{
+        var added = false
+        try {
+            val insert = "INSERT INTO location VALUES(NULL, ?, ?, ?, ?)"
+            conn.prepareStatement(insert).use { ps ->
+                ps.setTimestamp(1, location.startDate)
+                ps.setTimestamp(2, location.endDate)
+                if (location.osDataId == 0) {
+                    ps.setNull(3, Types.INTEGER)
+                } else {
+                    ps.setInt(3, location.osDataId)
+                }
+                if (location.savedLocationId == 0) {
+                    ps.setNull(4, Types.INTEGER)
+                } else {
+                    ps.setInt(4, location.savedLocationId)
+
+                }
+                ps.execute()
+            }
+            added = true
         } catch (exception: SQLException) {
             exception.printStackTrace()
         }
@@ -117,6 +147,7 @@ class Mysql(configItem: ConfigItem) {
             }
             osAddressItems.add(item)
             added = true
+            updateOsAdresses()
         } catch (exception: SQLException) {
             exception.printStackTrace()
         }
@@ -138,6 +169,10 @@ class Mysql(configItem: ConfigItem) {
 
     fun updateStops() {
         stops = getStopsDb()
+    }
+
+    fun updateOsAdresses() {
+        osAddressItems = getOsAddressDb()
     }
 
     fun getStops(): ArrayList<Stop> {
