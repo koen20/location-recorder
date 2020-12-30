@@ -1,13 +1,15 @@
+import model.OsAddressItem
+import model.Stop
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.lang.Exception
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.ArrayList
+import java.sql.Timestamp
+import java.util.*
 
 class Address {
-
     fun getAddressName(lat: Double, lon: Double, configItem: ConfigItem, mysql: Mysql): Stop {
         val stops: ArrayList<Stop> = mysql.getStops()
         for (i in stops.indices) {
@@ -15,27 +17,44 @@ class Address {
                 return stops[i]
             }
         }
-        var address = JSONObject()
+
+        //check db for stored addresses, fetch address if it doesn't exist
+        val checkItem = checkDbAddress(mysql, lat, lon)
+        if (checkItem != null){
+            return Stop(checkItem.name, checkItem.lat, checkItem.lon, 0, false)
+        }
+
+        var name = ""
         try {
-            address = getAddress(lat, lon, configItem)
+            name = getAddress(lat, lon, configItem)
         } catch (e: Exception) {
             println("Failed to get address from Openstreetmap")
         }
-        var name = ""
-        if (address.has("street")) {
-            name = address.getString("street")
-            if (address.has("housenumber")) {
-                name = name + " " + address.getString("housenumber")
-            }
-        } else if (address.has("name")) {
-            name = address.getString("name")
+
+        //add fetched address to db
+        if (name != ""){
+            val timestamp = Timestamp(Date().time)
+            println(timestamp.toString())
+            println(timestamp)
+            mysql.addOsAddress(OsAddressItem(0, name, lat, lon, timestamp))
         }
+
         return Stop(name, lat, lon, 0, false)
     }
 
+    //get addresses from Mysql.kt and return if items exists within 6 meter radius
+    fun checkDbAddress(mysql: Mysql, lat: Double, lon: Double): OsAddressItem?{
+        val addresses = mysql.getOsAddressItems()
+        addresses.forEach {
+            if (Timeline.distance(lat, it.lat, lon, it.lon, 0.0, 0.0) < 7){
+                return it
+            }
+        }
+        return null
+    }
+
     @Throws(Exception::class)
-    fun getAddress(lat: Double, lon: Double, configItem: ConfigItem): JSONObject {
-        //URL obj = new URL("http://photon.komoot.de/reverse?lon=" + lon + "&lat=" + lat);
+    fun getAddress(lat: Double, lon: Double, configItem: ConfigItem): String {
         val obj = URL(
             configItem.reverseGeocodeAddress.replace("LON", lon.toString() + "").replace("LAT", lat.toString() + "")
         )
@@ -53,8 +72,18 @@ class Address {
         `in`.close()
         val jsonObject =
             JSONObject(response.toString()).getJSONArray("features").getJSONObject(0).getJSONObject("properties")
-        println(JSONObject(response.toString()).getJSONArray("features").getJSONObject(0).toString())
-        return jsonObject
+
+        var name = ""
+        if (jsonObject.has("street")) {
+            name = jsonObject.getString("street")
+            if (jsonObject.has("housenumber")) {
+                name = name + " " + jsonObject.getString("housenumber")
+            }
+        } else if (jsonObject.has("name")) {
+            name = jsonObject.getString("name")
+        }
+
+        return name
     }
 
 }

@@ -3,6 +3,7 @@ import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import model.Stop
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -46,10 +47,11 @@ fun Route.data(mysql: Mysql, configItem: ConfigItem) {
                 call.parameters["lon"]!!.toDouble(), radius, true
             )
 
-            if (!mysql.AddStop(stop)) {
+            if (!mysql.addStop(stop)) {
                 call.respondText("Insert failed", status = HttpStatusCode.InternalServerError)
+            } else {
+                call.respondText("Added")
             }
-            mysql.updateStops()
         }
     }
 
