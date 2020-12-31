@@ -64,7 +64,7 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
         }
 
         val jsonArrayRoutes = Routes().getRouteFromStop(jsonArray, jsonArrayAll)
-
+        jsonArray.getJSONObject(jsonArray.length() - 1).put("end", 0)
         //remove parts with possible inaccurate gps data
         try {
             var index = 0
@@ -74,7 +74,7 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
             while (index <= lastIndex && lastIndex >= 0) {
                 val item = jsonArrayRoutes.getJSONObject(index)
                 if (item.getInt("pointCount") <= 4 && item.getDouble("distance") < 400 &&
-                    item.getString("startLocation") == item.getString("stopLocation")
+                        item.getString("startLocation") == item.getString("stopLocation")
                 ) {
                     for (k in 0 until jsonArray.length() - 1) {
                         val itemStop = jsonArray.getJSONObject(k)
@@ -95,28 +95,43 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
         jsonObjectRes.put("routes", jsonArrayRoutes)
         jsonObjectRes.put("stops", jsonArray)
 
-        /*for (g in 0 until jsonArray.length() - 1) {
-            val item = jsonArray.getJSONObject(g)
-            mysql.addLocation(
-                Location(
+        return jsonObjectRes
+    }
+
+    fun addItemsToDb() {
+        val locationsDb = mysql.getLocations(true)
+        if (locationsDb.size == 0) {
+            // add everything to db
+        } else {
+            println("Adding new locations to db")
+            val res = getData(mysql.getData(locationsDb[0].startDate.time / 1000))
+            val jsonArray = res.getJSONArray("stops")
+            println(jsonArray)
+            println(Mqtt.getMysqlDateString(locationsDb[0].startDate.time/ 1000))
+            /*val item = jsonArray.getJSONObject(0)
+            mysql.updateLocation(Location(
                     0,
                     Timestamp(item.getLong("start")),
                     Timestamp(item.getLong("end")),
                     item.getInt("osDataId"),
                     item.getInt("savedLocationId")
-                )
-            )
-        }*/
+            ))
 
-        return jsonObjectRes
+            jsonArray.remove(0)
+
+            for (g in 0 until jsonArray.length() - 1) {
+                val itemL = jsonArray.getJSONObject(g)
+                mysql.addLocation(itemL)
+            }*/
+        }
     }
 
     private fun add(latTot: Double, lonTot: Double, count: Int, firstTime: Timestamp, endTime: Timestamp): JSONObject {
         val stop = Address().getAddressName(
-            round(latTot / count, 5),
-            round(lonTot / count, 5),
-            configItem,
-            mysql
+                round(latTot / count, 5),
+                round(lonTot / count, 5),
+                configItem,
+                mysql
         )
 
         return JSONObject().apply {

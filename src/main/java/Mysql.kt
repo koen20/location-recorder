@@ -1,6 +1,7 @@
 import model.Location
 import model.OsAddressItem
 import model.Stop
+import org.json.JSONObject
 import java.sql.*
 import java.util.*
 import kotlin.collections.ArrayList
@@ -19,12 +20,12 @@ class Mysql(configItem: ConfigItem) {
                     stmt.executeQuery("SELECT * FROM stops").use { rs ->
                         while (rs.next()) {
                             val stop = Stop(
-                                rs.getInt("id"),
-                                rs.getString("name"),
-                                rs.getDouble("lat"),
-                                rs.getDouble("lon"),
-                                rs.getInt("radius"),
-                                true
+                                    rs.getInt("id"),
+                                    rs.getString("name"),
+                                    rs.getDouble("lat"),
+                                    rs.getDouble("lon"),
+                                    rs.getInt("radius"),
+                                    true
                             )
                             items.add(stop)
                         }
@@ -43,13 +44,13 @@ class Mysql(configItem: ConfigItem) {
                     stmt.executeQuery("SELECT * FROM osData").use { rs ->
                         while (rs.next()) {
                             val addressItem = OsAddressItem(
-                                rs.getInt("id"),
-                                rs.getString("name"),
-                                rs.getDouble("lat"),
-                                rs.getDouble("lon"),
-                                rs.getTimestamp("dateFetched"),
-                                rs.getString("city"),
-                                rs.getString("country")
+                                    rs.getInt("id"),
+                                    rs.getString("name"),
+                                    rs.getDouble("lat"),
+                                    rs.getDouble("lon"),
+                                    rs.getTimestamp("dateFetched"),
+                                    rs.getString("city"),
+                                    rs.getString("country")
                             )
                             items.add(addressItem)
                         }
@@ -66,7 +67,7 @@ class Mysql(configItem: ConfigItem) {
     init {
         try {
             conn =
-                DriverManager.getConnection(configItem.mysqlServer, configItem.mysqlUsername, configItem.mysqlPassword)
+                    DriverManager.getConnection(configItem.mysqlServer, configItem.mysqlUsername, configItem.mysqlPassword)
             stops = getStopsDb()
             osAddressItems = getOsAddressDb()
         } catch (e: Exception) {
@@ -81,7 +82,7 @@ class Mysql(configItem: ConfigItem) {
     fun disconnect() {
         try {
             conn.close()
-        } catch (e: Exception){
+        } catch (e: Exception) {
 
         }
     }
@@ -105,7 +106,19 @@ class Mysql(configItem: ConfigItem) {
         return added
     }
 
-    fun addLocation(location: Location): Boolean{
+    fun addLocation(item: JSONObject): Boolean{
+        return addLocation(
+                Location(
+                        0,
+                        Timestamp(item.getLong("start")),
+                        Timestamp(item.getLong("end")),
+                        item.getInt("osDataId"),
+                        item.getInt("savedLocationId")
+                )
+        )
+    }
+
+    fun addLocation(location: Location): Boolean {
         var added = false
         try {
             val insert = "INSERT INTO location VALUES(NULL, ?, ?, ?, ?)"
@@ -132,7 +145,63 @@ class Mysql(configItem: ConfigItem) {
         return added
     }
 
-    fun addOsAddress(item: OsAddressItem): Boolean{
+    fun updateLocation(location: Location): Boolean {
+        var added = false
+        try {
+            val insert = "UPDATE location SET startDate = ?, endDate = ?, osDataId = ?, savedLocationId = ? WHERE id = ?"
+            conn.prepareStatement(insert).use { ps ->
+                ps.setTimestamp(1, location.startDate)
+                ps.setTimestamp(2, location.endDate)
+                if (location.osDataId == 0) {
+                    ps.setNull(3, Types.INTEGER)
+                } else {
+                    ps.setInt(3, location.osDataId)
+                }
+                if (location.savedLocationId == 0) {
+                    ps.setNull(4, Types.INTEGER)
+                } else {
+                    ps.setInt(4, location.savedLocationId)
+
+                }
+                ps.setInt(5, location.id)
+                ps.execute()
+            }
+            added = true
+        } catch (exception: SQLException) {
+            exception.printStackTrace()
+        }
+        return added
+    }
+
+    fun getLocations(lastValue: Boolean = false): ArrayList<Location> {
+        val items: ArrayList<Location> = ArrayList()
+        try {
+            var query = "SELECT * FROM location"
+            if (lastValue) {
+                query = "SELECT * FROM location ORDER BY startDate DESC LIMIT 1"
+            }
+            conn.createStatement().use { stmt ->
+                stmt.executeQuery(query).use { rs ->
+                    while (rs.next()) {
+                        val addressItem = Location(
+                                rs.getInt("id"),
+                                rs.getTimestamp("startDate"),
+                                rs.getTimestamp("endDate"),
+                                rs.getInt("osDataId"),
+                                rs.getInt("savedLocationId")
+                        )
+                        items.add(addressItem)
+                    }
+                }
+            }
+        } catch (e: SQLException) {
+            e.printStackTrace()
+        }
+
+        return items
+    }
+
+    fun addOsAddress(item: OsAddressItem): Boolean {
         var added = false
         try {
             val insert = "INSERT INTO osData VALUES(NULL, ?, ?, ?, ?, ?, ?)"
@@ -154,7 +223,7 @@ class Mysql(configItem: ConfigItem) {
         return added
     }
 
-    fun getData(startTime: Long, endTime: Long): ArrayList<LocationItem> {
+    fun getData(startTime: Long, endTime: Long = 7289648397): ArrayList<LocationItem> {
         val data = ArrayList<LocationItem>()
         conn.createStatement().use { stmt ->
             stmt.executeQuery("SELECT * FROM data WHERE date BETWEEN '${Mqtt.getMysqlDateString(startTime)}' AND '${Mqtt.getMysqlDateString(endTime)}'").use { rs ->
@@ -179,7 +248,7 @@ class Mysql(configItem: ConfigItem) {
         return stops
     }
 
-    fun getOsAddressItems(): ArrayList<OsAddressItem>{
+    fun getOsAddressItems(): ArrayList<OsAddressItem> {
         return osAddressItems
     }
 
@@ -189,8 +258,8 @@ class Mysql(configItem: ConfigItem) {
                 if (!conn.isValid(3000)) {
                     conn.close()
                     conn = DriverManager.getConnection(
-                        configItem.mysqlServer,
-                        configItem.mysqlUsername, configItem.mysqlPassword
+                            configItem.mysqlServer,
+                            configItem.mysqlUsername, configItem.mysqlPassword
                     )
                 }
             } catch (e: SQLException) {
