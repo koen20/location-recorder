@@ -64,7 +64,7 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
         }
 
         val jsonArrayRoutes = Routes().getRouteFromStop(jsonArray, jsonArrayAll)
-        jsonArray.getJSONObject(jsonArray.length() - 1).put("end", 0)
+        //jsonArray.getJSONObject(jsonArray.length() - 1).put("end", 0)
         //remove parts with possible inaccurate gps data
         try {
             var index = 0
@@ -102,15 +102,20 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
         val locationsDb = mysql.getLocations(true)
         if (locationsDb.size == 0) {
             // add everything to db
+            println("Adding all locations to db")
+            val res = getData(mysql.getData(0))
+            val jsonArray = res.getJSONArray("stops")
+            for (g in 0 until jsonArray.length()) {
+                val itemL = jsonArray.getJSONObject(g)
+                mysql.addLocation(itemL)
+            }
         } else {
             println("Adding new locations to db")
             val res = getData(mysql.getData(locationsDb[0].startDate.time / 1000))
             val jsonArray = res.getJSONArray("stops")
-            println(jsonArray)
-            println(Mqtt.getMysqlDateString(locationsDb[0].startDate.time/ 1000))
-            /*val item = jsonArray.getJSONObject(0)
+            val item = jsonArray.getJSONObject(0)
             mysql.updateLocation(Location(
-                    0,
+                    locationsDb[0].id,
                     Timestamp(item.getLong("start")),
                     Timestamp(item.getLong("end")),
                     item.getInt("osDataId"),
@@ -118,11 +123,10 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
             ))
 
             jsonArray.remove(0)
-
-            for (g in 0 until jsonArray.length() - 1) {
+            for (g in 0 until jsonArray.length()) {
                 val itemL = jsonArray.getJSONObject(g)
                 mysql.addLocation(itemL)
-            }*/
+            }
         }
     }
 

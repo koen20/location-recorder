@@ -148,8 +148,7 @@ class Mysql(configItem: ConfigItem) {
     fun updateLocation(location: Location): Boolean {
         var added = false
         try {
-            val insert = "UPDATE location SET startDate = ?, endDate = ?, osDataId = ?, savedLocationId = ? WHERE id = ?"
-            conn.prepareStatement(insert).use { ps ->
+            conn.prepareStatement("UPDATE location SET startDate = ?, endDate = ?, osDataId = ?, savedLocationId = ? WHERE id = ?").use { ps ->
                 ps.setTimestamp(1, location.startDate)
                 ps.setTimestamp(2, location.endDate)
                 if (location.osDataId == 0) {
