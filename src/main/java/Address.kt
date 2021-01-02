@@ -12,7 +12,7 @@ import java.util.*
 
 class Address {
     fun getAddressName(lat: Double, lon: Double, configItem: ConfigItem, mysql: Mysql): AddressItem {
-        val stops: ArrayList<Stop> = mysql.getStops()
+        val stops: ArrayList<Stop> = mysql.stops
         for (i in stops.indices) {
             if (Timeline.distance(lat, stops[i].lat, lon, stops[i].lon, 0.0, 0.0) < stops[i].radius) {
                 return AddressItem(stops[i].name, stops[i].isUserAdded, 0, stops[i].id)
@@ -47,7 +47,7 @@ class Address {
 
     //get addresses from Mysql.kt and return if items exists within 40 meter radius
     fun checkDbAddress(mysql: Mysql, lat: Double, lon: Double): OsAddressItem?{
-        val addresses = mysql.getOsAddressItems()
+        val addresses = mysql.osAddressItems
         addresses.forEach {
             if (Timeline.distance(lat, it.lat, lon, it.lon, 0.0, 0.0) < 41){
                 return it

@@ -11,9 +11,11 @@ import static org.eclipse.paho.client.mqttv3.MqttClient.generateClientId;
 public class Mqtt implements MqttCallbackExtended {
     MqttClient client;
     ConfigItem configItem;
+    Mysql mysql;
 
-    public Mqtt(ConfigItem configItem) {
+    public Mqtt(ConfigItem configItem, Mysql mysql) {
         this.configItem = configItem;
+        this.mysql = mysql;
         try {
             client = new MqttClient(configItem.getMqttServer(), generateClientId());
             MqttConnectOptions connOpts = new MqttConnectOptions();
@@ -41,7 +43,7 @@ public class Mqtt implements MqttCallbackExtended {
                 } catch (JSONException ignored) {
 
                 }
-                Statement stmt = Mysql.conn.createStatement();
+                Statement stmt = mysql.conn.createStatement();
                 stmt.executeUpdate("INSERT INTO data VALUES (NULL, '" + tst + "', '"
                         + jsonObject.getDouble("lat") + "', '" + jsonObject.getDouble("lon") + "'" +
                         ", '" + jsonObject.getDouble("alt") + "', '" + jsonObject.getDouble("acc")
@@ -51,7 +53,7 @@ public class Mqtt implements MqttCallbackExtended {
         } catch (Exception e) {
             e.printStackTrace();
             try {
-                System.out.println(Mysql.conn.isValid(3000));
+                System.out.println(mysql.conn.isValid(3000));
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }

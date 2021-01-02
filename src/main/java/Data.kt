@@ -40,7 +40,10 @@ fun Route.data(mysql: Mysql, configItem: ConfigItem) {
 
     route("/stop") {
         get {
-            call.respondText(Gson().toJson(mysql.getStops()))
+            if (call.parameters["name"] != null){
+                call.respondText(Gson().toJson(mysql.getLocations(call.parameters["name"]!!)))
+            }
+            call.respondText(Gson().toJson(mysql.stops))
         }
         post {
             var radius = 100

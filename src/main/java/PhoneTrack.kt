@@ -10,7 +10,7 @@ fun Route.addPhoneTrackLocation(mysql: Mysql){
         get {
             try {
                 val tst = Mqtt.getMysqlDateString(call.parameters["timestamp"]!!.toLong())
-                val stmt = Mysql.conn.createStatement()
+                val stmt = mysql.conn.createStatement()
                 val alt = call.parameters["alt"]!!
                 if (alt == "") {
                     stmt.executeUpdate(
@@ -32,7 +32,7 @@ fun Route.addPhoneTrackLocation(mysql: Mysql){
             } catch (e: Exception) {
                 e.printStackTrace()
                 try {
-                    println(Mysql.conn.isValid(3000))
+                    println(mysql.conn.isValid(3000))
                 } catch (ex: SQLException) {
                     ex.printStackTrace()
                 }
