@@ -28,6 +28,7 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
         var lonTot = 0.0
         var firstTime: Timestamp? = null
         var endTime: Timestamp? = null
+
         locationItems.forEach { item ->
             if (distance(lat, item.lat, lon, item.lon, 0.0, 0.0) >= configItem.radiusLocation) {
                 time = item.date.time
@@ -64,7 +65,7 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
         }
 
         val jsonArrayRoutes = Routes().getRouteFromStop(jsonArray, jsonArrayAll)
-        //jsonArray.getJSONObject(jsonArray.length() - 1).put("end", 0)
+
         //remove parts with possible inaccurate gps data
         try {
             var index = 0
@@ -130,7 +131,7 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
         }
     }
 
-    private fun add(latTot: Double, lonTot: Double, count: Int, firstTime: Timestamp, endTime: Timestamp): JSONObject {
+    fun add(latTot: Double, lonTot: Double, count: Int, firstTime: Timestamp, endTime: Timestamp): JSONObject {
         val stop = Address().getAddressName(
                 round(latTot / count, 5),
                 round(lonTot / count, 5),

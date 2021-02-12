@@ -1,4 +1,5 @@
 import model.Location
+import model.LocationName
 import model.OsAddressItem
 import model.Stop
 import org.json.JSONObject
@@ -7,16 +8,18 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 interface Storage {
-    fun addStop(stop: Stop): Boolean
     fun addLocation(item: JSONObject): Boolean
     fun addLocation(location: Location): Boolean
     fun updateLocation(location: Location): Boolean
     fun getLocations(lastValue: Boolean = false): ArrayList<Location>
-    fun addOsAddress(item: OsAddressItem): Boolean
-    fun getData(startTime: Long, endTime: Long = 7289648397): ArrayList<LocationItem>
-    fun updateStops()
-    fun updateOsAdresses()
+    fun getLocations(startTime: Long, endTime: Long = 7289648397): ArrayList<LocationName>
     fun getLocations(stopName: String): ArrayList<Location>
+
+    fun addOsAddress(item: OsAddressItem): Boolean
+    fun updateOsAddresses()
+    fun getData(startTime: Long, endTime: Long = 7289648397): ArrayList<LocationItem>
+    fun addStop(stop: Stop): Boolean
+    fun updateStops()
 }
 
 class Mysql(configItem: ConfigItem) : Storage {
@@ -230,6 +233,53 @@ class Mysql(configItem: ConfigItem) : Storage {
         return items
     }
 
+    override fun getLocations(startTime: Long, endTime: Long): ArrayList<LocationName> {
+        val data = ArrayList<LocationName>()
+        conn.createStatement().use { stmt ->
+            stmt.executeQuery(
+                "SELECT * FROM location, stops WHERE (startDate BETWEEN '${Mqtt.getMysqlDateString(startTime)}' AND '${
+                    Mqtt.getMysqlDateString(
+                        endTime
+                    )
+                }' or endDate BETWEEN '${Mqtt.getMysqlDateString(startTime)}' AND '${
+                    Mqtt.getMysqlDateString(
+                        endTime
+                    )
+                }') AND location.savedLocationId = stops.id"
+            ).use { rs ->
+                while (rs.next()) {
+                    data.add(
+                        LocationName(
+                            0, rs.getTimestamp("startDate"), rs.getTimestamp("endDate"),
+                            rs.getInt("osDataId"), rs.getInt("savedLocationId"), rs.getString("name"), rs.getDouble("lat"), rs.getDouble("lon")
+                        )
+                    )
+                }
+            }
+        }
+
+        conn.createStatement().use { stmt ->
+            stmt.executeQuery(
+                "SELECT * FROM location, osData WHERE startDate BETWEEN '${Mqtt.getMysqlDateString(startTime)}' AND '${
+                    Mqtt.getMysqlDateString(
+                        endTime
+                    )
+                }' AND location.osDataId = osData.id"
+            ).use { rs ->
+                while (rs.next()) {
+                    data.add(
+                        LocationName(
+                            0, rs.getTimestamp("startDate"), rs.getTimestamp("endDate"),
+                            rs.getInt("osDataId"), rs.getInt("savedLocationId"), rs.getString("name"), rs.getDouble("lat"), rs.getDouble("lon")
+                        )
+                    )
+                }
+            }
+        }
+
+        return data
+    }
+
     override fun addOsAddress(item: OsAddressItem): Boolean {
         var added = false
         try {
@@ -245,7 +295,7 @@ class Mysql(configItem: ConfigItem) : Storage {
             }
             osAddressItems.add(item)
             added = true
-            updateOsAdresses()
+            updateOsAddresses()
         } catch (exception: SQLException) {
             exception.printStackTrace()
         }
@@ -275,31 +325,31 @@ class Mysql(configItem: ConfigItem) : Storage {
         stops = getStopsDb()
     }
 
-    override fun updateOsAdresses() {
+    override fun updateOsAddresses() {
         osAddressItems = getOsAddressDb()
     }
 
     override fun getLocations(stopName: String): ArrayList<Location> {
         val items: ArrayList<Location> = ArrayList()
         try {
-                conn.prepareStatement(
-                    "SELECT * FROM location, stops WHERE location.savedLocationId = stops.id AND stops.name = ?"
-                )
-                    .use { stmt ->
-                        stmt.setString(1, stopName)
-                        stmt.executeQuery().use { rs ->
-                            while (rs.next()) {
-                                val addressItem = Location(
-                                    rs.getInt("id"),
-                                    rs.getTimestamp("startDate"),
-                                    rs.getTimestamp("endDate"),
-                                    rs.getInt("osDataId"),
-                                    rs.getInt("savedLocationId")
-                                )
-                                items.add(addressItem)
-                            }
+            conn.prepareStatement(
+                "SELECT * FROM location, stops WHERE location.savedLocationId = stops.id AND stops.name = ?"
+            )
+                .use { stmt ->
+                    stmt.setString(1, stopName)
+                    stmt.executeQuery().use { rs ->
+                        while (rs.next()) {
+                            val addressItem = Location(
+                                rs.getInt("id"),
+                                rs.getTimestamp("startDate"),
+                                rs.getTimestamp("endDate"),
+                                rs.getInt("osDataId"),
+                                rs.getInt("savedLocationId")
+                            )
+                            items.add(addressItem)
                         }
                     }
+                }
         } catch (e: SQLException) {
             e.printStackTrace()
         }
