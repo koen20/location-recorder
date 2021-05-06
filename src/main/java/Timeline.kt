@@ -1,4 +1,6 @@
+import data.LocationDataDaoImpl
 import model.Location
+import model.LocationItem
 import org.json.JSONArray
 import org.json.JSONObject
 import java.lang.Exception
@@ -7,10 +9,12 @@ import java.math.RoundingMode
 import java.sql.Timestamp
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.math.*
 
 class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
     fun getDataDate(dt: Date): String {
-        return getData(mysql.getData(dt.time / 1000, (dt.time + 86400000) / 1000)).toString()
+        val locationDataDao = LocationDataDaoImpl(mysql.conn)
+        return getData(locationDataDao.getData(dt.time / 1000, (dt.time + 86400000) / 1000)).toString()
     }
 
     fun getData(locationItems: ArrayList<LocationItem>): JSONObject {
@@ -153,17 +157,17 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
 
     companion object {
         fun distance(lat1: Double, lat2: Double, lon1: Double, lon2: Double, el1: Double, el2: Double): Double {
-            val R = 6371 // Radius of the earth
+            val r = 6371 // Radius of the earth
             val latDistance = Math.toRadians(lat2 - lat1)
             val lonDistance = Math.toRadians(lon2 - lon1)
-            val a = (Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-                    + (Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                    * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2)))
-            val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-            var distance = R * c * 1000 // convert to meters
+            val a = (sin(latDistance / 2) * sin(latDistance / 2)
+                    + (cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2))
+                    * sin(lonDistance / 2) * sin(lonDistance / 2)))
+            val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+            var distance = r * c * 1000 // convert to meters
             val height = el1 - el2
-            distance = Math.pow(distance, 2.0) + Math.pow(height, 2.0)
-            return Math.sqrt(distance)
+            distance = distance.pow(2.0) + height.pow(2.0)
+            return sqrt(distance)
         }
 
         fun round(value: Double, places: Int): Double {

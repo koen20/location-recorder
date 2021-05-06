@@ -1,5 +1,4 @@
 import model.AddressItem
-import model.OsAddressItem
 import model.Stop
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -26,7 +25,7 @@ class Address {
         }
 
         var name = ""
-        var fetched: OsAddressItem? = null
+        var fetched: Stop? = null
         try {
             fetched = getAddress(lat, lon, configItem)
         } catch (e: Exception) {
@@ -46,7 +45,7 @@ class Address {
     }
 
     //get addresses from Mysql.kt and return if items exists within 40 meter radius
-    fun checkDbAddress(mysql: Mysql, lat: Double, lon: Double): OsAddressItem?{
+    fun checkDbAddress(mysql: Mysql, lat: Double, lon: Double): Stop?{
         val addresses = mysql.osAddressItems
         addresses.forEach {
             if (Timeline.distance(lat, it.lat, lon, it.lon, 0.0, 0.0) < 41){
@@ -57,7 +56,7 @@ class Address {
     }
 
     @Throws(Exception::class)
-    fun getAddress(lat: Double, lon: Double, configItem: ConfigItem): OsAddressItem {
+    fun getAddress(lat: Double, lon: Double, configItem: ConfigItem): Stop {
         val obj = URL(
             configItem.reverseGeocodeAddress.replace("LON", lon.toString() + "").replace("LAT", lat.toString() + "")
         )
@@ -100,7 +99,7 @@ class Address {
             }
         }
 
-        return OsAddressItem(0, name, lat, lon, Timestamp(Date().time), city, country)
+        return Stop(0, name, lat, lon, city, country, null, Timestamp(Date().time))
     }
 
 }

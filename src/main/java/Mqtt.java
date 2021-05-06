@@ -82,7 +82,7 @@ public class Mqtt implements MqttCallbackExtended {
 
     }
 
-    static String getMysqlDateString(long milliseconds) {
+    public static String getMysqlDateString(long milliseconds) {
         java.util.Date dt = new java.util.Date(milliseconds * 1000);
 
         java.text.SimpleDateFormat sdf =
