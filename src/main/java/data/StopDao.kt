@@ -6,6 +6,7 @@ import java.sql.SQLException
 
 interface StopDao {
     fun addStop(stop: Stop): Boolean
+    fun updateCustomName(stopId: Int, name: String): Boolean
     fun updateStop(stop: Stop): Boolean
     fun getStops(): ArrayList<Stop>
     fun deleteStop(stopId: Int): Boolean
@@ -46,6 +47,22 @@ class StopDaoImpl(private val conn: Connection) : StopDao {
                     ps.setString(5, stop.country)
                     ps.setString(6, stop.customName)
                     ps.setTimestamp(7, stop.dateFetched)
+                    ps.execute()
+                }
+            added = true
+        } catch (exception: SQLException) {
+            exception.printStackTrace()
+        }
+        return added
+    }
+
+    override fun updateCustomName(stopId: Int, name: String): Boolean {
+        var added = false
+        try {
+            conn.prepareStatement("UPDATE stop SET customName = ? WHERE stopId = ?")
+                .use { ps ->
+                    ps.setString(1, name)
+                    ps.setInt(2, stopId)
                     ps.execute()
                 }
             added = true

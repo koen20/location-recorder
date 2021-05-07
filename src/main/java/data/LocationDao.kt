@@ -1,15 +1,18 @@
 package data
 
 import model.Location
+import org.json.JSONObject
 import java.sql.Connection
 import java.sql.SQLException
+import java.sql.Timestamp
 import java.sql.Types
 
 interface LocationDao {
     fun addLocation(location: Location): Boolean
+    fun addLocation(location: JSONObject): Boolean
     fun updateLocation(location: Location): Boolean
     fun getLocations(lastValue: Boolean): ArrayList<Location>
-    fun getLocations(startTime: Long, endTime: Long): ArrayList<LocationName>
+    //fun getLocations(startTime: Long, endTime: Long): ArrayList<LocationName>
     fun getLocations(stopName: String): ArrayList<Location>
 }
 
@@ -30,6 +33,17 @@ class LocationDaoImpl(private val conn: Connection) : LocationDao {
             exception.printStackTrace()
         }
         return added
+    }
+
+    override fun addLocation(location: JSONObject): Boolean {
+        return addLocation(
+            Location(
+                0,
+                Timestamp(location.getLong("start")),
+                Timestamp(location.getLong("end")),
+                location.getInt("stopId"),
+            )
+        )
     }
 
     override fun updateLocation(location: Location): Boolean {
@@ -76,7 +90,7 @@ class LocationDaoImpl(private val conn: Connection) : LocationDao {
         return items
     }
 
-    override fun getLocations(startTime: Long, endTime: Long): ArrayList<LocationName> {
+    /*override fun getLocations(startTime: Long, endTime: Long): ArrayList<LocationName> {
         val data = ArrayList<LocationName>()
         conn.createStatement().use { stmt ->
             stmt.executeQuery(
@@ -121,7 +135,7 @@ class LocationDaoImpl(private val conn: Connection) : LocationDao {
         }
 
         return data
-    }
+    }*/
 
     override fun getLocations(stopName: String): ArrayList<Location> {
         val items: ArrayList<Location> = ArrayList()

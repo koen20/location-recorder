@@ -6,7 +6,7 @@ import java.sql.*
 class Mysql(configItem: ConfigItem) {
     lateinit var conn: Connection
     var locationDataDao = LocationDataDaoImpl(conn)
-    var LocationDao = LocationDaoImpl(conn)
+    var locationDao = LocationDaoImpl(conn)
     var stopDao = StopDaoImpl(conn)
 
     init {

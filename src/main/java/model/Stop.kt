@@ -10,5 +10,5 @@ data class Stop(
     var city: String,
     var country: String,
     var customName: String?,
-    var dateFetched: Timestamp
+    var dateFetched: Timestamp?
 )

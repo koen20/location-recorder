@@ -1,4 +1,3 @@
-import model.AddressItem
 import model.Stop
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -10,18 +9,12 @@ import java.sql.Timestamp
 import java.util.*
 
 class Address {
-    fun getAddressName(lat: Double, lon: Double, configItem: ConfigItem, mysql: Mysql): AddressItem {
-        val stops: ArrayList<Stop> = mysql.stops
+    fun getAddressName(lat: Double, lon: Double, configItem: ConfigItem, mysql: Mysql): Stop {
+        val stops: ArrayList<Stop> = mysql.stopDao.getStops()
         for (i in stops.indices) {
-            if (Timeline.distance(lat, stops[i].lat, lon, stops[i].lon, 0.0, 0.0) < stops[i].radius) {
-                return AddressItem(stops[i].name, stops[i].isUserAdded, 0, stops[i].id)
+            if (Timeline.distance(lat, stops[i].lat, lon, stops[i].lon, 0.0, 0.0) < configItem.radiusLocation) {
+                return stops[i]
             }
-        }
-
-        //check db for stored addresses, fetch address if it doesn't exist
-        val checkItem = checkDbAddress(mysql, lat, lon)
-        if (checkItem != null){
-            return AddressItem(checkItem.name, false, checkItem.id)
         }
 
         var name = ""
@@ -35,20 +28,20 @@ class Address {
         //add fetched address to db
         if (fetched != null){
             if (fetched.name != "") {
-                mysql.addOsAddress(fetched)
-                fetched = checkDbAddress(mysql, lat, lon)
-                return AddressItem(fetched!!.name, false, fetched!!.id)
+                mysql.stopDao.addStop(fetched)
+                fetched = checkDbAddress(mysql, lat, lon, configItem.radiusLocation)
+                return fetched!!
             }
         }
-        return AddressItem("", false)
+        return Stop(0, "", lat, lon, "", "", null, null)
 
     }
 
     //get addresses from Mysql.kt and return if items exists within 40 meter radius
-    fun checkDbAddress(mysql: Mysql, lat: Double, lon: Double): Stop?{
-        val addresses = mysql.osAddressItems
+    fun checkDbAddress(mysql: Mysql, lat: Double, lon: Double, radius: Int): Stop?{
+        val addresses = mysql.stopDao.getStops()
         addresses.forEach {
-            if (Timeline.distance(lat, it.lat, lon, it.lon, 0.0, 0.0) < 41){
+            if (Timeline.distance(lat, it.lat, lon, it.lon, 0.0, 0.0) < radius){
                 return it
             }
         }

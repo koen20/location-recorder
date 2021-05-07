@@ -5,7 +5,7 @@ import java.sql.Connection
 import java.sql.PreparedStatement
 
 interface LocationDataDao {
-    fun getData(startTime: Long, endTime: Long): ArrayList<LocationItem>
+    fun getData(startTime: Long, endTime: Long = 7289648397): ArrayList<LocationItem>
 }
 
 class LocationDataDaoImpl(private val conn: Connection) : LocationDataDao {
@@ -16,13 +16,7 @@ class LocationDataDaoImpl(private val conn: Connection) : LocationDataDao {
         ps.setString(1, Mqtt.getMysqlDateString(startTime))
         ps.setString(2, Mqtt.getMysqlDateString(endTime))
 
-        ps.executeQuery(
-            "SELECT * FROM data WHERE date BETWEEN '${}' AND '${
-                Mqtt.getMysqlDateString(
-                    endTime
-                )
-            }'"
-        ).use { rs ->
+        ps.executeQuery().use { rs ->
             while (rs.next()) {
                 data.add(LocationItem(rs.getTimestamp("date"), rs.getDouble("lat"), rs.getDouble("lon")))
             }

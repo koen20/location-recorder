@@ -13,8 +13,7 @@ import kotlin.math.*
 
 class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
     fun getDataDate(dt: Date): String {
-        val locationDataDao = LocationDataDaoImpl(mysql.conn)
-        return getData(locationDataDao.getData(dt.time / 1000, (dt.time + 86400000) / 1000)).toString()
+        return getData(mysql.locationDataDao.getData(dt.time / 1000, (dt.time + 86400000) / 1000)).toString()
     }
 
     fun getData(locationItems: ArrayList<LocationItem>): JSONObject {
@@ -104,33 +103,32 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
     }
 
     fun addItemsToDb() {
-        val locationsDb = mysql.getLocations(true)
+        val locationsDb = mysql.locationDao.getLocations(true)
         if (locationsDb.size == 0) {
             // add everything to db
             println("Adding all locations to db")
-            val res = getData(mysql.getData(0))
+            val res = getData(mysql.locationDataDao.getData(0))
             val jsonArray = res.getJSONArray("stops")
             for (g in 0 until jsonArray.length()) {
                 val itemL = jsonArray.getJSONObject(g)
-                mysql.addLocation(itemL)
+                mysql.locationDao.addLocation(itemL)
             }
         } else {
             println("Adding new locations to db")
-            val res = getData(mysql.getData(locationsDb[0].startDate.time / 1000))
+            val res = getData(mysql.locationDataDao.getData(locationsDb[0].startDate.time / 1000))
             val jsonArray = res.getJSONArray("stops")
             val item = jsonArray.getJSONObject(0)
-            mysql.updateLocation(Location(
-                    locationsDb[0].id,
+            mysql.locationDao.updateLocation(Location(
+                    locationsDb[0].locationId,
                     Timestamp(item.getLong("start")),
                     Timestamp(item.getLong("end")),
-                    item.getInt("osDataId"),
-                    item.getInt("savedLocationId")
+                    item.getInt("stopId")
             ))
 
             jsonArray.remove(0)
             for (g in 0 until jsonArray.length()) {
                 val itemL = jsonArray.getJSONObject(g)
-                mysql.addLocation(itemL)
+                mysql.locationDao.addLocation(itemL)
             }
         }
     }
@@ -146,12 +144,14 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
         return JSONObject().apply {
             put("start", firstTime.time)
             put("end", endTime.time)
-            put("location", stop.name)
-            put("locationUserAdded", stop.isUserAdded)
+            if (stop.customName == null) {
+                put("location", stop.name)
+            } else {
+                put("location", stop.customName)
+            }
             put("lat", round(latTot / count, 5))
             put("lon", round(lonTot / count, 5))
-            put("osDataId", stop.osDataId)
-            put("savedLocationId", stop.savedLocationId)
+            put("stopId", stop.stopId)
         }
     }
 
