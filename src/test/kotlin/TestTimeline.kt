@@ -1,4 +1,5 @@
 import com.google.gson.Gson
+import model.LocationItem
 import org.junit.Assert
 import org.junit.Test
 import java.io.FileReader

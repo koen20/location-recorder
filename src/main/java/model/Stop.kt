@@ -1,3 +1,14 @@
 package model
 
-class Stop(val id: Int, val name: String, val lat: Double, val lon: Double, val radius: Int, val isUserAdded: Boolean)
+import java.sql.Timestamp
+
+data class Stop(
+    var stopId: Int,
+    var name: String?,
+    var lat: Double,
+    var lon: Double,
+    var city: String,
+    var country: String,
+    var customName: String?,
+    var dateFetched: Timestamp?
+)

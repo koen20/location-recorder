@@ -21,7 +21,7 @@ fun Route.data(mysql: Mysql, configItem: ConfigItem) {
                 "Missing endTime",
                 status = HttpStatusCode.BadRequest
             )
-            call.respondText(Gson().toJson(mysql.getData(startTime.toLong(), endTime.toLong())))
+            call.respondText(Gson().toJson(mysql.locationDataDao.getData(startTime.toLong(), endTime.toLong())))
         }
     }
 
@@ -51,9 +51,9 @@ fun Route.data(mysql: Mysql, configItem: ConfigItem) {
                 val timeline = Timeline(configItem, mysql)
                 val dt = df.parse(date)
                 val jsonArray = JSONArray();
-                mysql.getLocations(dt.time / 1000, (dt.time + 86400000) / 1000).forEach {
+                /*mysql.getLocations(dt.time / 1000, (dt.time + 86400000) / 1000).forEach {
                     jsonArray.put(timeline.add(it.lat, it.lon, 1, it.startDate, it.endDate))
-                }
+                }*/
                 val jsonObject = JSONObject()
                 jsonObject.put("stops", jsonArray)
                 jsonObject.put("routes", JSONArray())
@@ -67,21 +67,12 @@ fun Route.data(mysql: Mysql, configItem: ConfigItem) {
     route("/stop") {
         get {
             if (call.parameters["name"] != null) {
-                call.respondText(Gson().toJson(mysql.getLocations(call.parameters["name"]!!)))
+                    call.respondText(Gson().toJson(mysql.locationDao.getLocations(call.parameters["name"]!!)))
             }
-            call.respondText(Gson().toJson(mysql.stops))
+            call.respondText(Gson().toJson(mysql.stopDao.getStops()))
         }
         post {
-            var radius = 100
-            if (call.parameters["date"] != null) {
-                radius = call.parameters["date"]!!.toInt()
-            }
-            val stop = Stop(
-                0, call.parameters["name"]!!, call.parameters["lat"]!!.toDouble(),
-                call.parameters["lon"]!!.toDouble(), radius, true
-            )
-
-            if (!mysql.addStop(stop)) {
+            if (!mysql.stopDao.updateCustomName(call.parameters["stopId"]!!.toInt(), call.parameters["name"]!!)) {
                 call.respondText("Insert failed", status = HttpStatusCode.InternalServerError)
             } else {
                 call.respondText("Added")
