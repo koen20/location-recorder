@@ -1,12 +1,5 @@
-import com.google.gson.Gson
-import model.LocationItem
-import org.junit.Assert
-import org.junit.Test
-import java.io.FileReader
-import java.sql.Timestamp
-
 class TestTimeline {
-    @Test
+    /*@Test
     fun testTimeline() {
         val configItem = Gson().fromJson(FileReader("configExample.json"), ConfigItem::class.java)
         val mysql = Mysql(configItem)
@@ -27,5 +20,5 @@ class TestTimeline {
             valid = false
         }
         Assert.assertFalse(valid)
-    }
+    }*/
 }
