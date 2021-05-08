@@ -1,18 +1,22 @@
 import data.LocationDaoImpl
 import data.LocationDataDaoImpl
 import data.StopDaoImpl
-import java.sql.*
+import java.sql.Connection
+import java.sql.DriverManager
 
 class Mysql(configItem: ConfigItem) {
     lateinit var conn: Connection
-    var locationDataDao = LocationDataDaoImpl(conn)
-    var locationDao = LocationDaoImpl(conn)
-    var stopDao = StopDaoImpl(conn)
+    lateinit var locationDataDao: LocationDataDaoImpl
+    lateinit var locationDao: LocationDaoImpl
+    lateinit var stopDao: StopDaoImpl
 
     init {
         try {
             conn =
                 DriverManager.getConnection(configItem.mysqlServer, configItem.mysqlUsername, configItem.mysqlPassword)
+            locationDataDao = LocationDataDaoImpl(conn)
+            locationDao = LocationDaoImpl(conn)
+            stopDao = StopDaoImpl(conn)
         } catch (e: Exception) {
             println("Failed to connect to database $e")
         }

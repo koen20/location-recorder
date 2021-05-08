@@ -1,11 +1,11 @@
 package data
 
+import com.google.gson.Gson
 import model.Location
 import org.json.JSONObject
 import java.sql.Connection
 import java.sql.SQLException
 import java.sql.Timestamp
-import java.sql.Types
 
 interface LocationDao {
     fun addLocation(location: Location): Boolean
@@ -31,6 +31,8 @@ class LocationDaoImpl(private val conn: Connection) : LocationDao {
             added = true
         } catch (exception: SQLException) {
             exception.printStackTrace()
+            val gson = Gson()
+            println(gson.toJson(location))
         }
         return added
     }
@@ -54,6 +56,7 @@ class LocationDaoImpl(private val conn: Connection) : LocationDao {
                     ps.setTimestamp(1, location.startDate)
                     ps.setTimestamp(2, location.endDate)
                     ps.setInt(3, location.stopId)
+                    ps.setInt(4, location.locationId)
                     ps.execute()
                 }
             added = true
@@ -74,7 +77,7 @@ class LocationDaoImpl(private val conn: Connection) : LocationDao {
                 stmt.executeQuery(query).use { rs ->
                     while (rs.next()) {
                         val locationItem = Location(
-                            rs.getInt("id"),
+                            rs.getInt("locationId"),
                             rs.getTimestamp("startDate"),
                             rs.getTimestamp("endDate"),
                             rs.getInt("stopId"),
@@ -148,7 +151,7 @@ class LocationDaoImpl(private val conn: Connection) : LocationDao {
                     stmt.executeQuery().use { rs ->
                         while (rs.next()) {
                             val addressItem = Location(
-                                rs.getInt("id"),
+                                rs.getInt("locationId"),
                                 rs.getTimestamp("startDate"),
                                 rs.getTimestamp("endDate"),
                                 rs.getInt("stopId"),
