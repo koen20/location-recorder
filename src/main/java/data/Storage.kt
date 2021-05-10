@@ -3,6 +3,8 @@ import data.LocationDataDaoImpl
 import data.StopDaoImpl
 import java.sql.Connection
 import java.sql.DriverManager
+import java.sql.SQLException
+import java.util.*
 
 class Mysql(configItem: ConfigItem) {
     lateinit var conn: Connection
@@ -20,6 +22,22 @@ class Mysql(configItem: ConfigItem) {
         } catch (e: Exception) {
             println("Failed to connect to database $e")
         }
+
+        Timer().scheduleAtFixedRate(object : TimerTask() {
+            override fun run() {
+                try {
+                    if (!conn.isValid(3000)) {
+                        conn.close()
+                        conn = DriverManager.getConnection(
+                            configItem.mysqlServer,
+                            configItem.mysqlUsername, configItem.mysqlPassword
+                        )
+                    }
+                } catch (e: SQLException) {
+                    e.printStackTrace()
+                }
+            }
+        }, 10000, 60000)
     }
 
     fun disconnect() {
