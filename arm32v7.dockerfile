@@ -19,4 +19,4 @@ USER $APPLICATION_USER
 COPY --from=builder /usr/src/app/owntracks-mysql-1.0/ /app/
 WORKDIR /config
 
-CMD /app/owntracks-mysql-1.0/bin/owntracks-mysql
+CMD /app/bin/owntracks-mysql
