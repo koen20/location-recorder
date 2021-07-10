@@ -53,7 +53,7 @@ class Address {
         )
         val con = obj.openConnection() as HttpURLConnection
         con.requestMethod = "GET"
-        con.setRequestProperty("User-Agent", "owntracks-mysql-recorder")
+        con.setRequestProperty("User-Agent", "location-recorder-recorder")
         val `in` = BufferedReader(
             InputStreamReader(con.inputStream)
         )

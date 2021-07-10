@@ -1,4 +1,3 @@
-import data.LocationDataDaoImpl
 import model.Location
 import model.LocationItem
 import org.json.JSONArray

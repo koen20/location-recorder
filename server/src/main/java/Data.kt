@@ -3,12 +3,10 @@ import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import model.Stop
 import org.json.JSONArray
 import org.json.JSONObject
 import java.lang.Exception
 import java.text.SimpleDateFormat
-import java.util.*
 
 fun Route.data(mysql: Mysql, configItem: ConfigItem) {
     route("/info") {
