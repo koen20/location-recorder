@@ -2,7 +2,7 @@ name: Docker image
 
 on:
   push:
-    branches: github-actions
+    branches: master
 
 jobs:
   main:
@@ -35,5 +35,5 @@ jobs:
           platforms: linux/arm/v7
           push: true
           tags: koen20/location-recorder:arm32v7
-      - name: lastest manifest
+      - name: latest manifest
         run: ./hooks/post_push
