@@ -36,5 +36,4 @@ jobs:
           push: true
           tags: koen20/location-recorder:arm32v7
       - name: lastest manifest
-        run: |
-        ./hooks/post_push
+        run: ./hooks/post_push
