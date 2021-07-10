@@ -1,0 +1,37 @@
+name: Docker image
+
+on:
+  push:
+    branches: github-actions
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./amd64.dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: koen20/location-recorder:amd64
+      - name: Build and push arm32v7
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./arm32v7.dockerfile
+          platforms: linux/arm/v7
+          push: true
+          tags: koen20/location-recorder:arm32v7
