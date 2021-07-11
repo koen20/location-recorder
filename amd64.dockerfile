@@ -16,7 +16,7 @@ RUN chown -R $APPLICATION_USER /app
 
 USER $APPLICATION_USER
 
-COPY --from=builder /usr/src/app/location-recorder-1.0/* /app/
-WORKDIR /app
+COPY --from=builder /usr/src/app/location-recorder-1.0/ /app/
+WORKDIR /config
 
-CMD bin/location-recorder
+CMD /app/bin/location-recorder

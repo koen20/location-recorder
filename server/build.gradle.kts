@@ -2,11 +2,12 @@ group = "nl.koenhabets.location-recorder.server"
 version = "1.0"
 
 val kotlin_version: String by project
+val ktor_version: String by project
 val embed_web: String by project
 
 plugins {
     application
-    kotlin("jvm") version "1.4.21"
+    kotlin("jvm") version "1.5.20"
 }
 
 repositories {
@@ -21,11 +22,11 @@ application {
 
 dependencies {
     implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
-    implementation("org.mariadb.jdbc:mariadb-java-client:2.7.2")
-    implementation("org.json:json:20200518")
-    implementation("com.google.code.gson:gson:2.8.6")
-    implementation("io.ktor:ktor-server-core:1.5.0")
-    implementation("io.ktor:ktor-server-netty:1.5.0")
+    implementation("org.mariadb.jdbc:mariadb-java-client:2.7.3")
+    implementation("org.json:json:20210307")
+    implementation("com.google.code.gson:gson:2.8.7")
+    implementation("io.ktor:ktor-server-core:$ktor_version")
+    implementation("io.ktor:ktor-server-netty:$ktor_version")
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
 }
