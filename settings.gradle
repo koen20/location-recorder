@@ -1,2 +1,3 @@
-rootProject.name = 'owntracks-mysql'
-
+rootProject.name = 'location-recorder'
+include("server")
+include("web")
