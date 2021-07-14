@@ -1,4 +1,7 @@
 FROM arm32v7/adoptopenjdk:11-jdk as builder
+RUN apt-get update && apt-get install -y \
+  libatomic1 \
+  && rm -rf /var/lib/apt/lists/*
 
 COPY . /usr/src/app
 WORKDIR /usr/src/app
