@@ -1,11 +1,10 @@
-import com.moowork.gradle.node.yarn.YarnTask
 plugins {
-    id("com.github.node-gradle.node") version "2.2.4"
+    id("com.github.node-gradle.node") version "3.1.0"
 }
 
 node {
-    nodeModulesDir = file("${project.projectDir}")
-    download = true
+    nodeProjectDir.set(file("${project.projectDir}"))
+    download.set(true)
 }
 
 tasks.register<Delete>("clean") {
@@ -14,22 +13,22 @@ tasks.register<Delete>("clean") {
 
 }
 
-tasks.register<YarnTask>("build") {
+tasks.register<com.github.gradle.node.yarn.task.YarnTask>("build") {
     dependsOn("yarn_install")
-    args = listOf("build")
+    args.set(listOf("build"))
 }
 
-tasks.register<YarnTask>("serve") {
+tasks.register<com.github.gradle.node.yarn.task.YarnTask>("serve") {
     dependsOn("yarn_install")
-    args = listOf("serve")
+    args.set(listOf("serve"))
 
 }
 
-tasks.register<YarnTask>("lint") {
+tasks.register<com.github.gradle.node.yarn.task.YarnTask>("lint") {
     dependsOn("yarn_install")
-    args = listOf("lint")
+    args.set(listOf("lint"))
 }
 
-tasks.register<YarnTask>("check") {
+tasks.register<com.github.gradle.node.yarn.task.YarnTask>("check") {
     dependsOn("lint")
 }

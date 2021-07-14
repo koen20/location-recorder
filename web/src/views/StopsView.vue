@@ -1,10 +1,13 @@
 <template>
-
+  <stop-list></stop-list>
 </template>
 
-<script>
+<script lang="ts">
+import StopList from "@/components/StopList.vue";
+
 export default {
-  name: "StopsView"
+  name: "StopsView",
+  components: {StopList}
 }
 </script>
 
