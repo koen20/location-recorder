@@ -59,7 +59,6 @@ var locations = [];
 var map;
 var markers;
 var timelineJson;
-var host = "http://127.0.0.1:9936/"
 
 function initMap() {
   map = L.map('mapid').setView([51.505, -0.09], 13);
@@ -71,7 +70,7 @@ function initMap() {
 
 async function setMap(startTime, endTime) {
   clearMap();
-  const response = await axios.get(host + "api/info?startTime=" + startTime + "&endTime=" + endTime,
+  const response = await axios.get("/api/info?startTime=" + startTime + "&endTime=" + endTime,
       {
         transformResponse: (res) => {
           // Do your own parsing here if needed ie JSON.parse(res);
@@ -110,7 +109,7 @@ function clearMap() {
 async function setTimeline(date) {
   document.getElementById("timeline").innerHTML = "Laden..."
 
-  const response = await axios.get(host + "api/timeline?date=" + date,
+  const response = await axios.get("/api/timeline?date=" + date,
       {
         transformResponse: (res) => {
           // Do your own parsing here if needed ie JSON.parse(res);

@@ -31,7 +31,7 @@ export default {
 
   async created() {
     try {
-      const response = await axios.get(`http://127.0.0.1:9936/api/stop`)
+      const response = await axios.get(`/api/stop`)
       this.stops = response.data
     } catch (e) {
       this.errors.push(e)
