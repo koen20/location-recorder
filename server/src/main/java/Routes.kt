@@ -1,31 +1,30 @@
-import org.json.JSONArray
-import org.json.JSONObject
-import java.lang.Exception
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import model.LocationItem
+import model.LocationView
 
 class Routes {
-    fun getRouteFromStop(stops: JSONArray, all: JSONArray): JSONArray {
-        val jsonArray = JSONArray()
-        for (i in 0 until stops.length() - 1) { //loop through every stop
+    fun getRouteFromStop(stops: ArrayList<LocationView>, all: ArrayList<LocationItem>): JsonArray {
+        val jsonArray = JsonArray()
+        stops.forEachIndexed { index, item ->  //loop through every stop
             try {
-                val item = stops.getJSONObject(i)
-                val itemS = stops.getJSONObject(i + 1)
+                val itemS = stops[index]
                 var distanceTot = 0.0
                 var pointCount = 0
-                var lastLat = item.getDouble("lat")
-                var lastLon = item.getDouble("lon")
-                for (k in 0 until all.length()) { //loop through all locations
-                    val item2 = all.getJSONObject(k)
+                var lastLat = item.lat
+                var lastLon = item.lon
+                all.forEach { //loop through all locations
                     //get all locations between two stops
-                    if (item2.getLong("date") >= item.getLong("end") && item2.getLong("date") <= itemS.getLong("start")) {
+                    if (it.date.time >= item.end.time && it.date.time <= itemS.start.time) {
                         distanceTot += Timeline.distance(
-                            item2.getDouble("lat"), lastLat, item2.getDouble("lon"), lastLon, 0.0, 0.0
+                            it.lat, lastLat, it.lon, lastLon, 0.0, 0.0
                         )
-                        lastLat = item2.getDouble("lat")
-                        lastLon = item2.getDouble("lon")
+                        lastLat = it.lat
+                        lastLon = it.lon
                         pointCount += 1
                     }
                 }
-                val time = (itemS.getLong("start") - item.getLong("end")).toDouble()
+                val time = (itemS.start.time - item.end.time).toDouble()
                 val timeHours = time / 1000 / 60 / 60
                 var speed = distanceTot / 1000.0 / timeHours
 
@@ -40,17 +39,17 @@ class Routes {
                     speed = 0.0
                 }
 
-                jsonArray.put(JSONObject().apply {
-                    put("start", item.getLong("end"))
-                    put("end", itemS.getLong("start"))
-                    put("route", item.getString("location") + " - " + itemS.getString("location"))
-                    put("startLocation", item.getString("location"))
-                    put("stopLocation", itemS.getString("location"))
-                    put("distance", distanceTot)
-                    put("time", time)
-                    put("speed", speed)
-                    put("movementType", movementType)
-                    put("pointCount", pointCount)
+                jsonArray.add(JsonObject().apply {
+                    addProperty("start", item.end.time)
+                    addProperty("end", itemS.start.time)
+                    addProperty("route", item.location + " - " + itemS.location)
+                    addProperty("startLocation", item.location)
+                    addProperty("stopLocation", itemS.location)
+                    addProperty("distance", distanceTot)
+                    addProperty("time", time)
+                    addProperty("speed", speed)
+                    addProperty("movementType", movementType)
+                    addProperty("pointCount", pointCount)
                 })
             } catch (exception: Exception){
                 exception.printStackTrace()

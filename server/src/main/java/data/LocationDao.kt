@@ -1,15 +1,15 @@
 package data
 
 import com.google.gson.Gson
+import com.google.gson.JsonObject
 import model.Location
-import org.json.JSONObject
 import java.sql.Connection
 import java.sql.SQLException
 import java.sql.Timestamp
 
 interface LocationDao {
     fun addLocation(location: Location): Boolean
-    fun addLocation(location: JSONObject): Boolean
+    fun addLocation(location: JsonObject): Boolean
     fun updateLocation(location: Location): Boolean
     fun getLocations(lastValue: Boolean): ArrayList<Location>
     //fun getLocations(startTime: Long, endTime: Long): ArrayList<LocationName>
@@ -37,13 +37,13 @@ class LocationDaoImpl(private val conn: Connection) : LocationDao {
         return added
     }
 
-    override fun addLocation(location: JSONObject): Boolean {
+    override fun addLocation(location: JsonObject): Boolean {
         return addLocation(
             Location(
                 0,
-                Timestamp(location.getLong("start")),
-                Timestamp(location.getLong("end")),
-                location.getInt("stopId"),
+                Timestamp(location.get("start").asLong),
+                Timestamp(location.get("end").asLong),
+                location.get("stopId").asInt,
             )
         )
     }
