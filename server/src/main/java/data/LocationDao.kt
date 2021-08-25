@@ -144,10 +144,11 @@ class LocationDaoImpl(private val conn: Connection) : LocationDao {
         val items: ArrayList<Location> = ArrayList()
         try {
             conn.prepareStatement(
-                "SELECT * FROM location, stop WHERE location.stopId = stop.stopId AND stop.name = ? OR stop.customName = ?"
+                "SELECT * FROM location, stop WHERE location.stopId = stop.stopId AND (stop.name = ? OR stop.customName = ?)"
             )
                 .use { stmt ->
                     stmt.setString(1, stopName)
+                    stmt.setString(2, stopName)
                     stmt.executeQuery().use { rs ->
                         while (rs.next()) {
                             val addressItem = Location(
