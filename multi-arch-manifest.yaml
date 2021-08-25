@@ -1,10 +1,10 @@
 image: koen20/location-recorder:latest
 manifests:
-  - image: koen20/location-recorder:amd64
+  - image: ghcr.io/koen20/location-recorder:amd64
     platform:
       architecture: amd64
       os: linux
-  - image: koen20/location-recorder:arm32v7
+  - image: ghcr.io/koen20/location-recorder:arm32v7
     platform:
       architecture: arm
       os: linux
