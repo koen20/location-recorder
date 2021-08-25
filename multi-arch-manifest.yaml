@@ -1,4 +1,4 @@
-image: koen20/location-recorder:latest
+image: ghcr.io/koen20/location-recorder:latest
 manifests:
   - image: ghcr.io/koen20/location-recorder:amd64
     platform:
