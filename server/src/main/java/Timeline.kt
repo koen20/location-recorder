@@ -1,24 +1,25 @@
+import com.google.gson.Gson
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.reflect.TypeToken
 import model.Location
 import model.LocationItem
-import org.json.JSONArray
-import org.json.JSONObject
-import java.lang.Exception
+import model.LocationView
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.sql.Timestamp
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.math.*
+
 
 class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
     fun getDataDate(dt: Date): String {
         return getData(mysql.locationDataDao.getData(dt.time / 1000, (dt.time + 86400000) / 1000)).toString()
     }
 
-    fun getData(locationItems: ArrayList<LocationItem>): JSONObject {
-        val jsonArray = JSONArray()
-        val jsonArrayAll = JSONArray()
-        val jsonObjectRes = JSONObject()
+    fun getData(locationItems: ArrayList<LocationItem>): JsonObject {
+        val locationList = ArrayList<LocationView>()
+        val jsonObjectRes = JsonObject()
 
         var lat = 0.0
         var lon = 0.0
@@ -31,12 +32,15 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
         var firstTime: Timestamp? = null
         var endTime: Timestamp? = null
 
-        locationItems.forEach { item ->
+        locationItems.forEachIndexed { index, item ->
+            /* todo timezones don't work correctly currently. It looks like the time is saved correctly in the database
+                this needs to be converted in the frontend and old location data regenerated. */
+            locationItems[index].date = Timestamp(item.date.time + 7200000)
             if (distance(lat, item.lat, lon, item.lon, 0.0, 0.0) >= configItem.radiusLocation) {
                 time = item.date.time
                 multiple = false
                 if (!added) {
-                    jsonArray.put(add(latTot, lonTot, count, firstTime!!, endTime!!))
+                    locationList.add(add(latTot, lonTot, count, firstTime!!, endTime!!))
                     added = true
                 }
                 count = 0
@@ -56,47 +60,51 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
                 lonTot += item.lon
                 endTime = item.date
             }
-            jsonArrayAll.put(JSONObject().apply {
-                put("date", item.date.time)
-                put("lat", item.lat)
-                put("lon", item.lon)
-            })
         }
         if (!added) {
-            jsonArray.put(add(latTot, lonTot, count, firstTime!!, endTime!!))
+            locationList.add(add(latTot, lonTot, count, firstTime!!, endTime!!))
         }
 
-        val jsonArrayRoutes = Routes().getRouteFromStop(jsonArray, jsonArrayAll)
+        val jsonArrayRoutes = Routes().getRouteFromStop(locationList, locationItems)
 
         //remove parts with possible inaccurate gps data
         try {
-            var index = 0
-            var lastIndex = jsonArrayRoutes.length() - 1
-
             //loop through all routes
-            while (index <= lastIndex && lastIndex >= 0) {
-                val item = jsonArrayRoutes.getJSONObject(index)
-                if (item.getInt("pointCount") <= 4 && item.getDouble("distance") < 400 &&
-                        item.getString("startLocation") == item.getString("stopLocation")
+            val removeListR = ArrayList<JsonElement>()
+            jsonArrayRoutes.forEachIndexed { index, jsonElement ->
+                val item = jsonElement.asJsonObject
+                if (item.get("pointCount").asInt <= 4 && item.get("distance").asDouble < 400 &&
+                    item.get("startLocation").asString == item.get("stopLocation").asString
                 ) {
-                    for (k in 0 until jsonArray.length() - 1) {
-                        val itemStop = jsonArray.getJSONObject(k)
-                        if (itemStop.getLong("end") == item.getLong("start")) {//get the stop before the route that is being removed
-                            jsonArrayRoutes.remove(index)
-                            jsonArray.getJSONObject(k).put("end", jsonArray.getJSONObject(k + 1).getLong("end"))
-                            jsonArray.remove(k + 1)
-                            lastIndex--
+                    val removeList = ArrayList<LocationView>()
+                    for (k in 0 until locationList.size - 1) {
+                        val itemStop = locationList[k]
+                        if (itemStop.end == item.get("start").asLong) {//get the stop before the route that is being removed
+                            removeListR.add(jsonElement)
+                            locationList[k].end = locationList[k + 1].end
+                            removeList.add(locationList[k + 1])
                         }
                     }
+                    removeList.forEach {
+                        locationList.remove(it)
+                    }
                 }
-                index++
+            }
+            removeListR.forEach {
+                jsonArrayRoutes.remove(it)
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
-        jsonObjectRes.put("routes", jsonArrayRoutes)
-        jsonObjectRes.put("stops", jsonArray)
+        val gson = Gson()
+        val element = gson.toJsonTree(locationList, object : TypeToken<List<LocationView?>?>() {}.type)
+        if (!element.isJsonArray()) {
+            throw Exception();
+        }
+
+        jsonObjectRes.add("routes", jsonArrayRoutes)
+        jsonObjectRes.add("stops", gson.toJsonTree(locationList))
 
         return jsonObjectRes
     }
@@ -107,51 +115,52 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
             // add everything to db
             println("Adding all locations to db")
             val res = getData(mysql.locationDataDao.getData(0))
-            val jsonArray = res.getJSONArray("stops")
-            for (g in 0 until jsonArray.length()) {
-                val itemL = jsonArray.getJSONObject(g)
+            val jsonArray = res.get("stops").asJsonArray
+            for (g in 0 until jsonArray.size()) {
+                val itemL = jsonArray.get(g).asJsonObject
                 mysql.locationDao.addLocation(itemL)
             }
         } else {
+            //todo fix this
             println("Adding new locations to db")
             val res = getData(mysql.locationDataDao.getData(locationsDb[0].startDate.time / 1000))
-            val jsonArray = res.getJSONArray("stops")
-            val item = jsonArray.getJSONObject(0)
-            mysql.locationDao.updateLocation(Location(
+            println(res)
+            val jsonArray = res.get("stops").asJsonArray
+            val item = jsonArray.get(0).asJsonObject
+            mysql.locationDao.updateLocation(
+                Location(
                     locationsDb[0].locationId,
-                    Timestamp(item.getLong("start")),
-                    Timestamp(item.getLong("end")),
-                    item.getInt("stopId")
-            ))
+                    Timestamp(item.get("start").asLong),
+                    Timestamp(item.get("end").asLong),
+                    item.get("stopId").asInt
+                )
+            )
 
             jsonArray.remove(0)
-            for (g in 0 until jsonArray.length()) {
-                val itemL = jsonArray.getJSONObject(g)
+            for (g in 0 until jsonArray.size()) {
+                val itemL = jsonArray.get(g).asJsonObject
                 mysql.locationDao.addLocation(itemL)
             }
         }
     }
 
-    fun add(latTot: Double, lonTot: Double, count: Int, firstTime: Timestamp, endTime: Timestamp): JSONObject {
+    fun add(latTot: Double, lonTot: Double, count: Int, firstTime: Timestamp, endTime: Timestamp): LocationView {
         val stop = Address().getAddressName(
-                round(latTot / count, 5),
-                round(lonTot / count, 5),
-                configItem,
-                mysql
+            round(latTot / count, 5),
+            round(lonTot / count, 5),
+            configItem,
+            mysql
         )
 
-        return JSONObject().apply {
-            put("start", firstTime.time)
-            put("end", endTime.time)
-            if (stop.customName == null) {
-                put("location", stop.name)
-            } else {
-                put("location", stop.customName)
-            }
-            put("lat", round(latTot / count, 5))
-            put("lon", round(lonTot / count, 5))
-            put("stopId", stop.stopId)
-        }
+        return LocationView(
+            0,
+            firstTime.time,
+            endTime.time,
+            round(latTot / count, 5),
+            round(lonTot / count, 5),
+            stop.stopId,
+            stop.customName ?: stop.name
+        )
     }
 
     companion object {
