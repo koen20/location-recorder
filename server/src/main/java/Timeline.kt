@@ -33,9 +33,7 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
         var endTime: Timestamp? = null
 
         locationItems.forEachIndexed { index, item ->
-            /* todo timezones don't work correctly currently. It looks like the time is saved correctly in the database
-                this needs to be converted in the frontend and old location data regenerated. */
-            locationItems[index].date = Timestamp(item.date.time + 7200000)
+            locationItems[index].date = Timestamp(item.date.time)
             if (distance(lat, item.lat, lon, item.lon, 0.0, 0.0) >= configItem.radiusLocation) {
                 time = item.date.time
                 multiple = false
