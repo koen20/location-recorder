@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17 as builder
+FROM eclipse-temurin:11 as builder
 RUN apt-get update && apt-get install -y \
   libatomic1 \
   && rm -rf /var/lib/apt/lists/*
