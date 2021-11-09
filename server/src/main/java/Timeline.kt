@@ -71,7 +71,7 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
             val removeListR = ArrayList<JsonElement>()
             jsonArrayRoutes.forEachIndexed { index, jsonElement ->
                 val item = jsonElement.asJsonObject
-                if (item.get("pointCount").asInt <= 4 && item.get("distance").asDouble < 400 &&
+                if (item.get("pointCount").asInt <= 4 && item.get("distance").asDouble < 600 &&
                     item.get("startLocation").asString == item.get("stopLocation").asString
                 ) {
                     val removeList = ArrayList<LocationView>()
