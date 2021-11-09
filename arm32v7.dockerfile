@@ -21,7 +21,7 @@ RUN $JAVA_HOME/bin/jlink \
 FROM debian:bullseye-slim
 ENV JAVA_HOME=/opt/java/openjdk
 ENV PATH "${JAVA_HOME}/bin:${PATH}"
-COPY --from=jre-build /javaruntime $JAVA_HOME
+COPY --from=builder /javaruntime $JAVA_HOME
 
 ENV APPLICATION_USER ktor
 RUN useradd -ms /bin/bash $APPLICATION_USER
