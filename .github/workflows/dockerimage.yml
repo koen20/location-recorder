@@ -35,8 +35,8 @@ jobs:
           file: ./arm32v7.dockerfile
           platforms: linux/arm/v7
           push: true
-          cache-from: type=registry,ref=koen20/location-recorder:buildcache
-          cache-to: type=registry,ref=koen20/location-recorder:buildcache,mode=max
+          cache-from: type=registry,ref=ghcr.io/koen20/location-recorder:buildcache
+          cache-to: type=registry,ref=ghcr.io/koen20/location-recorder:buildcache,mode=max
           tags: ghcr.io/koen20/location-recorder:arm32v7
       - name: latest manifest
         run: ./hooks/post_push
