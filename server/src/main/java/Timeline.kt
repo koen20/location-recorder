@@ -1,10 +1,9 @@
 import com.google.gson.Gson
-import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import com.google.gson.reflect.TypeToken
 import model.Location
 import model.LocationItem
 import model.LocationView
+import model.Route
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.sql.Timestamp
@@ -63,22 +62,21 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
             locationList.add(add(latTot, lonTot, count, firstTime!!, endTime!!))
         }
 
-        val jsonArrayRoutes = Routes().getRouteFromStop(locationList, locationItems)
+        val arrayRoutes = Routes().getRouteFromStop(locationList, locationItems)
 
         //remove parts with possible inaccurate gps data
         try {
             //loop through all routes
-            val removeListR = ArrayList<JsonElement>()
-            jsonArrayRoutes.forEachIndexed { index, jsonElement ->
-                val item = jsonElement.asJsonObject
-                if (item.get("pointCount").asInt <= 4 && item.get("distance").asDouble < 600 &&
-                    item.get("startLocation").asString == item.get("stopLocation").asString
+            val removeListR = ArrayList<Route>()
+            arrayRoutes.forEachIndexed { index, item ->
+                if (item.pointCount!! <= 4 && item.distance < 600 &&
+                    item.startLocationId == item.endLocationId
                 ) {
                     val removeList = ArrayList<LocationView>()
                     for (k in 0 until locationList.size - 1) {
                         val itemStop = locationList[k]
-                        if (itemStop.end == item.get("start").asLong) {//get the stop before the route that is being removed
-                            removeListR.add(jsonElement)
+                        if (itemStop.end == item.startDate) {//get the stop before the route that is being removed
+                            removeListR.add(item)
                             locationList[k].end = locationList[k + 1].end
                             removeList.add(locationList[k + 1])
                         }
@@ -89,19 +87,15 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
                 }
             }
             removeListR.forEach {
-                jsonArrayRoutes.remove(it)
+                arrayRoutes.remove(it)
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
         val gson = Gson()
-        val element = gson.toJsonTree(locationList, object : TypeToken<List<LocationView?>?>() {}.type)
-        if (!element.isJsonArray()) {
-            throw Exception();
-        }
 
-        jsonObjectRes.add("routes", jsonArrayRoutes)
+        jsonObjectRes.add("routes", gson.toJsonTree(arrayRoutes))
         jsonObjectRes.add("stops", gson.toJsonTree(locationList))
 
         return jsonObjectRes
@@ -119,7 +113,6 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
                 mysql.locationDao.addLocation(itemL)
             }
         } else {
-            //todo fix this
             println("Adding new locations to db")
             val res = getData(mysql.locationDataDao.getData(locationsDb[0].startDate.time / 1000))
             println(res)

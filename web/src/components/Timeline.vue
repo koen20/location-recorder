@@ -15,6 +15,7 @@
 <script>
 import L from 'leaflet'
 import axios from 'axios';
+import "leaflet/dist/leaflet.css";
 
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -53,7 +54,6 @@ export default {
     }
   }
 }
-import "leaflet/dist/leaflet.css";
 
 var locations = [];
 var map;
@@ -109,7 +109,7 @@ function clearMap() {
 async function setTimeline(date) {
   document.getElementById("timeline").innerHTML = "Laden..."
 
-  const response = await axios.get("/api/timeline?date=" + date,
+  const response = await axios.get("/api/timelineDb?date=" + date,
       {
         transformResponse: (res) => {
           // Do your own parsing here if needed ie JSON.parse(res);
