@@ -1,11 +1,10 @@
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
 import model.LocationItem
 import model.LocationView
+import model.Route
 
 class Routes {
-    fun getRouteFromStop(stops: ArrayList<LocationView>, all: ArrayList<LocationItem>): JsonArray {
-        val jsonArray = JsonArray()
+    fun getRouteFromStop(stops: ArrayList<LocationView>, all: ArrayList<LocationItem>): ArrayList<Route> {
+        val routeList = ArrayList<Route>()
         for (i in 0 until stops.size - 1) {  //loop through every stop
             try {
                 val item = stops[i]
@@ -36,27 +35,33 @@ class Routes {
                     movementType = "driving"
                 }
 
-                if (timeHours == 0.0){
+                if (timeHours == 0.0) {
                     speed = 0.0
                 }
 
-                jsonArray.add(JsonObject().apply {
-                    addProperty("start", item.end)
-                    addProperty("end", itemS.start)
-                    addProperty("route", item.location + " - " + itemS.location)
-                    addProperty("startLocation", item.location)
-                    addProperty("stopLocation", itemS.location)
-                    addProperty("distance", distanceTot)
-                    addProperty("time", time)
-                    addProperty("speed", speed)
-                    addProperty("movementType", movementType)
-                    addProperty("pointCount", pointCount)
-                })
-            } catch (exception: Exception){
+                routeList.add(
+                    Route(
+                        null,
+                        item.end,
+                        itemS.start,
+                        item.locationId,
+                        itemS.locationId,
+                        item.location!!,
+                        itemS.location!!,
+                        item.location + " - " + itemS.location,
+                        distanceTot,
+                        time,
+                        pointCount,
+                        movementType,
+                        speed
+                    )
+                )
+
+            } catch (exception: Exception) {
                 exception.printStackTrace()
             }
         }
 
-        return jsonArray
+        return routeList
     }
 }

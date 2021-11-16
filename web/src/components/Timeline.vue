@@ -15,6 +15,7 @@
 <script>
 import L from 'leaflet'
 import axios from 'axios';
+import "leaflet/dist/leaflet.css";
 
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -53,7 +54,6 @@ export default {
     }
   }
 }
-import "leaflet/dist/leaflet.css";
 
 var locations = [];
 var map;
@@ -137,7 +137,7 @@ async function setTimeline(date) {
     markers.addLayer(marker);
     for (let k = 0; k < jsonArrayRoutes.length; k++) {
       var itemR = jsonArrayRoutes[k];
-      if (itemR.start === item.end) {
+      if (itemR.startDate === item.end) {
         var icon = ""
         if (itemR.movementType === "walking") {
           icon = "img/walking.svg"

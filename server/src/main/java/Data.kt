@@ -1,11 +1,9 @@
 import com.google.gson.Gson
+import com.google.gson.JsonObject
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import org.json.JSONArray
-import org.json.JSONObject
-import java.lang.Exception
 import java.text.SimpleDateFormat
 
 fun Route.data(mysql: Mysql, configItem: ConfigItem) {
@@ -39,6 +37,7 @@ fun Route.data(mysql: Mysql, configItem: ConfigItem) {
                 }
             }
         }
+
         route("/timelineDb") {
             get {
                 val df = SimpleDateFormat("yyyy-MM-dd")
@@ -47,15 +46,12 @@ fun Route.data(mysql: Mysql, configItem: ConfigItem) {
                     status = HttpStatusCode.BadRequest
                 )
                 try {
-                    val timeline = Timeline(configItem, mysql)
                     val dt = df.parse(date)
-                    val jsonArray = JSONArray();
-                    /*mysql.getLocations(dt.time / 1000, (dt.time + 86400000) / 1000).forEach {
-                    jsonArray.put(timeline.add(it.lat, it.lon, 1, it.startDate, it.endDate))
-                }*/
-                    val jsonObject = JSONObject()
-                    jsonObject.put("stops", jsonArray)
-                    jsonObject.put("routes", JSONArray())
+                    val locations = mysql.locationDao.getLocationsView(dt.time / 1000, (dt.time + 86400000) / 1000)
+                    val gson = Gson()
+                    val jsonObject = JsonObject()
+                    jsonObject.add("stops", gson.toJsonTree(locations))
+                    jsonObject.add("routes", gson.toJsonTree("[]"))
                     call.respondText(jsonObject.toString())
                 } catch (e: Exception) {
                     e.printStackTrace()

@@ -1,8 +1,10 @@
 package data
 
+import Mqtt
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import model.Location
+import model.LocationView
 import java.sql.Connection
 import java.sql.SQLException
 import java.sql.Timestamp
@@ -12,6 +14,8 @@ interface LocationDao {
     fun addLocation(location: JsonObject): Boolean
     fun updateLocation(location: Location): Boolean
     fun getLocations(lastValue: Boolean): ArrayList<Location>
+    fun getLocationsView(startTime: Long, endTime: Long): ArrayList<LocationView>
+
     //fun getLocations(startTime: Long, endTime: Long): ArrayList<LocationName>
     fun getLocations(stopName: String): ArrayList<Location>
 }
@@ -83,6 +87,44 @@ class LocationDaoImpl(private val conn: Connection) : LocationDao {
                             rs.getInt("stopId"),
                         )
                         items.add(locationItem)
+                    }
+                }
+            }
+        } catch (e: SQLException) {
+            e.printStackTrace()
+        }
+
+        return items
+    }
+
+    override fun getLocationsView(startTime: Long, endTime: Long): ArrayList<LocationView> {
+        val items: ArrayList<LocationView> = ArrayList()
+        try {
+            var query = "SELECT * FROM location, stop WHERE location.stopId = stop.stopId AND (startDate BETWEEN '${Mqtt.getMysqlDateString(startTime)}' AND '${
+                Mqtt.getMysqlDateString(
+                    endTime
+                )
+            }' or endDate BETWEEN '${Mqtt.getMysqlDateString(startTime)}' AND '${
+                Mqtt.getMysqlDateString(
+                    endTime
+                )
+            }') order by location.locationId"
+            /*if (lastValue) {
+                query = "SELECT * FROM location ORDER BY startDate DESC LIMIT 1"
+            }*/
+            conn.createStatement().use { stmt ->
+                stmt.executeQuery(query).use { rs ->
+                    while (rs.next()) {
+                        val locationViewItem = LocationView(
+                            rs.getInt("locationId"),
+                            rs.getTimestamp("startDate").time,
+                            rs.getTimestamp("endDate").time,
+                            rs.getDouble("lat"),
+                            rs.getDouble("lon"),
+                            rs.getInt("stopId"),
+                            rs.getString("customName") ?: rs.getString("name")
+                        )
+                        items.add(locationViewItem)
                     }
                 }
             }
