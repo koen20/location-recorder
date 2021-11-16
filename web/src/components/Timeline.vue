@@ -109,7 +109,7 @@ function clearMap() {
 async function setTimeline(date) {
   document.getElementById("timeline").innerHTML = "Laden..."
 
-  const response = await axios.get("/api/timelineDb?date=" + date,
+  const response = await axios.get("/api/timeline?date=" + date,
       {
         transformResponse: (res) => {
           // Do your own parsing here if needed ie JSON.parse(res);
@@ -137,7 +137,7 @@ async function setTimeline(date) {
     markers.addLayer(marker);
     for (let k = 0; k < jsonArrayRoutes.length; k++) {
       var itemR = jsonArrayRoutes[k];
-      if (itemR.start === item.end) {
+      if (itemR.startDate === item.end) {
         var icon = ""
         if (itemR.movementType === "walking") {
           icon = "img/walking.svg"

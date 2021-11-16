@@ -23,43 +23,74 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
         var lat = 0.0
         var lon = 0.0
         var time: Long = 0
+        var lastTime: Long = 0
         var multiple = true
         var added = true
-        var count = 0
-        var latTot = 0.0
-        var lonTot = 0.0
         var firstTime: Timestamp? = null
         var endTime: Timestamp? = null
+        val locationItemsLoop = ArrayList<LocationItem>()
 
         locationItems.forEachIndexed { index, item ->
             locationItems[index].date = Timestamp(item.date.time)
-            if (distance(lat, item.lat, lon, item.lon, 0.0, 0.0) >= configItem.radiusLocation) {
+            var radiusLocation = configItem.radiusLocation
+            if (distance(lat, item.lat, lon, item.lon, 0.0, 0.0) < 600 && item.date.time - lastTime > 820000) {
+                if (locationList.size != 0) {
+                    val lastAdded = locationList.get(locationList.size - 1)
+                    if (distance(lastAdded.lat, item.lat, lastAdded.lon, item.lon, 0.0, 0.0) > 300) {
+                        radiusLocation = 600
+                    }
+                }
+            }
+
+            if (distance(lat, item.lat, lon, item.lon, 0.0, 0.0) >= radiusLocation) {
                 time = item.date.time
                 multiple = false
                 if (!added) {
-                    locationList.add(add(latTot, lonTot, count, firstTime!!, endTime!!))
+                    var locationCountLim = 4
+                    if (locationItemsLoop.size > 15) {
+                        locationCountLim = 10
+                    }
+                    while (locationItemsLoop.size > locationCountLim) {
+                        locationItemsLoop.removeAt(locationItemsLoop.size - 1)
+                        locationItemsLoop.removeAt(0);
+                    }
+
+                    locationList.add(
+                            add(
+                                locationItemsLoop.sumOf { it.lat },
+                                locationItemsLoop.sumOf { it.lon },
+                                locationItemsLoop.size,
+                                firstTime!!,
+                                endTime!!
+                            )
+                        )
                     added = true
                 }
-                count = 0
-                latTot = 0.0
-                lonTot = 0.0
+                locationItemsLoop.clear()
                 firstTime = item.date
                 lat = item.lat
                 lon = item.lon
             }
-            if (distance(lat, item.lat, lon, item.lon, 0.0, 0.0) < configItem.radiusLocation) {
+            if (distance(lat, item.lat, lon, item.lon, 0.0, 0.0) < radiusLocation) {
                 if (item.date.time - time > 420000 && !multiple) {
                     multiple = true
                     added = false
                 }
-                count += 1
-                latTot += item.lat
-                lonTot += item.lon
+                locationItemsLoop.add(item)
                 endTime = item.date
+                lastTime = item.date.time
             }
         }
         if (!added) {
-            locationList.add(add(latTot, lonTot, count, firstTime!!, endTime!!))
+            locationList.add(
+                add(
+                    locationItemsLoop.sumOf { it.lat },
+                    locationItemsLoop.sumOf { it.lon },
+                    locationItemsLoop.size,
+                    firstTime!!,
+                    endTime!!
+                )
+            )
         }
 
         val arrayRoutes = Routes().getRouteFromStop(locationList, locationItems)
@@ -69,8 +100,8 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
             //loop through all routes
             val removeListR = ArrayList<Route>()
             arrayRoutes.forEachIndexed { index, item ->
-                if (item.pointCount!! <= 4 && item.distance < 600 &&
-                    item.startLocationId == item.endLocationId
+                if (item.pointCount!! <= 4 && item.distance < 700 &&
+                    item.startLocation == item.stopLocation
                 ) {
                     val removeList = ArrayList<LocationView>()
                     for (k in 0 until locationList.size - 1) {
