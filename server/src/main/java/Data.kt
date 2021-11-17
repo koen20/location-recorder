@@ -31,7 +31,16 @@ fun Route.data(mysql: Mysql, configItem: ConfigItem) {
                 )
                 try {
                     val timeline = Timeline(configItem, mysql)
-                    call.respondText(timeline.getDataDate(df.parse(date)))
+                    val dt = df.parse(date)
+                    val locationDataItems = mysql.locationDataDao.getData(dt.time / 1000, (dt.time + 86400000) / 1000)
+                    val locationItems = timeline.getData(locationDataItems)
+                    val arrayRoutes = Routes().getRouteFromStop(locationItems, locationDataItems)
+
+                    val jsonObjectRes = JsonObject()
+                    val gson = Gson()
+                    jsonObjectRes.add("routes", gson.toJsonTree(arrayRoutes))
+                    jsonObjectRes.add("stops", gson.toJsonTree(locationItems))
+                    call.respondText(jsonObjectRes.toString())
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }

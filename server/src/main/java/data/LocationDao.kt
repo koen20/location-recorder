@@ -2,7 +2,6 @@ package data
 
 import Mqtt
 import com.google.gson.Gson
-import com.google.gson.JsonObject
 import model.Location
 import model.LocationView
 import java.sql.Connection
@@ -11,7 +10,7 @@ import java.sql.Timestamp
 
 interface LocationDao {
     fun addLocation(location: Location): Boolean
-    fun addLocation(location: JsonObject): Boolean
+    fun addLocation(location: LocationView): Boolean
     fun updateLocation(location: Location): Boolean
     fun getLocations(lastValue: Boolean): ArrayList<Location>
     fun getLocationsView(startTime: Long, endTime: Long): ArrayList<LocationView>
@@ -41,13 +40,13 @@ class LocationDaoImpl(private val conn: Connection) : LocationDao {
         return added
     }
 
-    override fun addLocation(location: JsonObject): Boolean {
+    override fun addLocation(location: LocationView): Boolean {
         return addLocation(
             Location(
                 0,
-                Timestamp(location.get("start").asLong),
-                Timestamp(location.get("end").asLong),
-                location.get("stopId").asInt,
+                Timestamp(location.start),
+                Timestamp(location.end),
+                location.stopId,
             )
         )
     }

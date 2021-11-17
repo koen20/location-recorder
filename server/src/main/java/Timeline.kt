@@ -1,5 +1,3 @@
-import com.google.gson.Gson
-import com.google.gson.JsonObject
 import model.Location
 import model.LocationItem
 import model.LocationView
@@ -7,18 +5,12 @@ import model.Route
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.sql.Timestamp
-import java.util.*
 import kotlin.math.*
 
 
 class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
-    fun getDataDate(dt: Date): String {
-        return getData(mysql.locationDataDao.getData(dt.time / 1000, (dt.time + 86400000) / 1000)).toString()
-    }
-
-    fun getData(locationItems: ArrayList<LocationItem>): JsonObject {
+    fun getData(locationItems: ArrayList<LocationItem>): ArrayList<LocationView> {
         val locationList = ArrayList<LocationView>()
-        val jsonObjectRes = JsonObject()
 
         var lat = 0.0
         var lon = 0.0
@@ -124,12 +116,7 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
             e.printStackTrace()
         }
 
-        val gson = Gson()
-
-        jsonObjectRes.add("routes", gson.toJsonTree(arrayRoutes))
-        jsonObjectRes.add("stops", gson.toJsonTree(locationList))
-
-        return jsonObjectRes
+        return locationList
     }
 
     fun addItemsToDb() {
@@ -137,31 +124,25 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
         if (locationsDb.size == 0) {
             // add everything to db
             println("Adding all locations to db")
-            val res = getData(mysql.locationDataDao.getData(0))
-            val jsonArray = res.get("stops").asJsonArray
-            for (g in 0 until jsonArray.size()) {
-                val itemL = jsonArray.get(g).asJsonObject
-                mysql.locationDao.addLocation(itemL)
+            val locations = getData(mysql.locationDataDao.getData(0))
+            locations.forEach {
+                mysql.locationDao.addLocation(it)
             }
         } else {
             println("Adding new locations to db")
-            val res = getData(mysql.locationDataDao.getData(locationsDb[0].startDate.time / 1000))
-            println(res)
-            val jsonArray = res.get("stops").asJsonArray
-            val item = jsonArray.get(0).asJsonObject
+            val locations = getData(mysql.locationDataDao.getData(locationsDb[0].startDate.time / 1000))
+            val item = locations.get(0)
             mysql.locationDao.updateLocation(
                 Location(
                     locationsDb[0].locationId,
-                    Timestamp(item.get("start").asLong),
-                    Timestamp(item.get("end").asLong),
-                    item.get("stopId").asInt
+                    Timestamp(item.start),
+                    Timestamp(item.end),
+                    item.stopId
                 )
             )
-
-            jsonArray.remove(0)
-            for (g in 0 until jsonArray.size()) {
-                val itemL = jsonArray.get(g).asJsonObject
-                mysql.locationDao.addLocation(itemL)
+            locations.removeAt(0)
+            locations.forEach {
+                mysql.locationDao.addLocation(it)
             }
         }
     }
