@@ -1,16 +1,17 @@
 package data
 
 import Mqtt
-import com.google.gson.Gson
 import model.Location
 import model.LocationView
 import java.sql.Connection
 import java.sql.SQLException
+import java.sql.Statement
 import java.sql.Timestamp
 
+
 interface LocationDao {
-    fun addLocation(location: Location): Boolean
-    fun addLocation(location: LocationView): Boolean
+    fun addLocation(location: Location): Location?
+    fun addLocation(location: LocationView): Location?
     fun updateLocation(location: Location): Boolean
     fun getLocations(lastValue: Boolean): ArrayList<Location>
     fun getLocationsView(startTime: Long, endTime: Long): ArrayList<LocationView>
@@ -21,26 +22,31 @@ interface LocationDao {
 
 class LocationDaoImpl(private val conn: Connection) : LocationDao {
 
-    override fun addLocation(location: Location): Boolean {
-        var added = false
+    //add location to db, returns added location with the generated id
+    override fun addLocation(location: Location): Location? {
+        var locationAdded: Location? = null
         try {
             val insert = "INSERT INTO location VALUES(NULL, ?, ?, ?)"
-            conn.prepareStatement(insert).use { ps ->
+            val pst = conn.prepareStatement(insert, Statement.RETURN_GENERATED_KEYS)
+            pst.use { ps ->
                 ps.setTimestamp(1, location.startDate)
                 ps.setTimestamp(2, location.endDate)
                 ps.setInt(3, location.stopId)
                 ps.execute()
             }
-            added = true
+            locationAdded = location
+
+            val rs = pst.generatedKeys
+            if (rs.next()) {
+                locationAdded.locationId = rs.getInt(1)
+            }
         } catch (exception: SQLException) {
             exception.printStackTrace()
-            val gson = Gson()
-            println(gson.toJson(location))
         }
-        return added
+        return locationAdded
     }
 
-    override fun addLocation(location: LocationView): Boolean {
+    override fun addLocation(location: LocationView): Location? {
         return addLocation(
             Location(
                 0,

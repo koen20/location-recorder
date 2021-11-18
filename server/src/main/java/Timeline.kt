@@ -131,7 +131,7 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
         } else {
             println("Adding new locations to db")
             val locations = getData(mysql.locationDataDao.getData(locationsDb[0].startDate.time / 1000))
-            val item = locations.get(0)
+            val item = locations[0]
             mysql.locationDao.updateLocation(
                 Location(
                     locationsDb[0].locationId,
