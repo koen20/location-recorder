@@ -137,20 +137,23 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
 
             // update last added location item with new information
             val item = locations[0]
-            mysql.locationDao.updateLocation(
-                Location(
-                    locationsDbLast[0].locationId,
-                    Timestamp(item.start),
-                    Timestamp(item.end),
-                    item.stopId
-                )
+            val newLocation = Location(
+                locationsDbLast[0].locationId,
+                Timestamp(item.start),
+                Timestamp(item.end),
+                item.stopId
             )
+            if (newLocation != locationsDbLast[0]) {
+                mysql.locationDao.updateLocation(newLocation)
+            } else {
+                println("No changes")
+            }
             locations.removeAt(0)
         }
-
-        locations.forEach {
+        mysql.locationDao.addLocationViews(locations)
+        /*locations.forEach {
             it.locationId = mysql.locationDao.addLocation(it)!!.locationId
-        }
+        }*/
 
         //get all routes between locations. Then add the start and end location id to the route item
         val arrayRoutes = Routes().getRouteFromStop(locations, locationDataItems)
@@ -165,7 +168,7 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
         }
 
         arrayRoutes.forEach {
-            mysql.routeDao.addRoute(it)
+            //mysql.routeDao.addRoute(it)
         }
     }
 

@@ -10,8 +10,8 @@ import java.sql.Timestamp
 
 
 interface LocationDao {
-    fun addLocation(location: Location): Location?
-    fun addLocation(location: LocationView): Location?
+    fun addLocations(location: ArrayList<Location>): Location?
+    fun addLocationViews(location: ArrayList<LocationView>): Location?
     fun updateLocation(location: Location): Boolean
     fun getLocations(lastValue: Boolean): ArrayList<Location>
     fun getLocationsView(startTime: Long, endTime: Long): ArrayList<LocationView>
@@ -23,38 +23,56 @@ interface LocationDao {
 class LocationDaoImpl(private val conn: Connection) : LocationDao {
 
     //add location to db, returns added location with the generated id
-    override fun addLocation(location: Location): Location? {
+    override fun addLocations(locations: ArrayList<Location>): Location? {
         var locationAdded: Location? = null
         try {
             val insert = "INSERT INTO location VALUES(NULL, ?, ?, ?)"
             val pst = conn.prepareStatement(insert, Statement.RETURN_GENERATED_KEYS)
-            pst.use { ps ->
-                ps.setTimestamp(1, location.startDate)
-                ps.setTimestamp(2, location.endDate)
-                ps.setInt(3, location.stopId)
-                ps.execute()
+            var count = 0
+            var executeResult: IntArray = IntArray(0)
+            locations.forEachIndexed { index, it ->
+                pst.use { ps ->
+                    ps.setTimestamp(1, it.startDate)
+                    ps.setTimestamp(2, it.endDate)
+                    ps.setInt(3, it.stopId)
+                    ps.addBatch()
+                    count++
+                    if (count > 500 || index + 1 == locations.size) {
+                        executeResult = ps.executeBatch()
+                    }
+                }
             }
-            locationAdded = location
 
             val rs = pst.generatedKeys
-            if (rs.next()) {
-                locationAdded.locationId = rs.getInt(1)
-            }
+                for (i in 0 until executeResult.size) {
+                    rs.next()
+                    if (executeResult[i] === 1) {
+                        println(
+                            "Execute Result: " + i + ", Update Count: " + executeResult[i] + ", id: "
+                                    + rs.getLong(1)
+                        )
+                    }
+                }
         } catch (exception: SQLException) {
             exception.printStackTrace()
         }
         return locationAdded
     }
 
-    override fun addLocation(location: LocationView): Location? {
-        return addLocation(
-            Location(
-                0,
-                Timestamp(location.start),
-                Timestamp(location.end),
-                location.stopId,
+    override fun addLocationViews(locationViews: ArrayList<LocationView>): Location? {
+        val locations = ArrayList<Location>()
+        locationViews.forEach {
+            locations.add(
+                Location(
+                    0,
+                    Timestamp(it.start),
+                    Timestamp(it.end),
+                    it.stopId,
+                )
             )
-        )
+        }
+
+        return addLocations(locations)
     }
 
     override fun updateLocation(location: Location): Boolean {
@@ -105,7 +123,9 @@ class LocationDaoImpl(private val conn: Connection) : LocationDao {
     override fun getLocationsView(startTime: Long, endTime: Long): ArrayList<LocationView> {
         val items: ArrayList<LocationView> = ArrayList()
         try {
-            val query = "SELECT * FROM location, stop WHERE location.stopId = stop.stopId AND (startDate BETWEEN '${Mqtt.getMysqlDateString(startTime)}' AND '${
+            val query = "SELECT * FROM location, stop WHERE location.stopId = stop.stopId AND (startDate BETWEEN '${
+                Mqtt.getMysqlDateString(startTime)
+            }' AND '${
                 Mqtt.getMysqlDateString(
                     endTime
                 )
