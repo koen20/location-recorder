@@ -1,7 +1,7 @@
 class TestTimeline {
     /*@Test
     fun testTimeline() {
-        val configItem = Gson().fromJson(FileReader("configExample.json"), ConfigItem::class.java)
+        val configItem = Gson().fromJson(FileReader("configExample.json"), model.ConfigItem::class.java)
         val mysql = Mysql(configItem)
         val items = ArrayList<LocationItem>().apply {
             add(LocationItem(Timestamp(1609168993000), 35.686546, -29.627341))

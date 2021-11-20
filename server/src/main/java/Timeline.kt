@@ -1,7 +1,4 @@
-import model.Location
-import model.LocationItem
-import model.LocationView
-import model.Route
+import model.*
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.sql.Timestamp

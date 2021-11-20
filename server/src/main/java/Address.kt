@@ -1,3 +1,4 @@
+import model.ConfigItem
 import model.Stop
 import org.json.JSONObject
 import java.io.BufferedReader

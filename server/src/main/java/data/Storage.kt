@@ -2,6 +2,7 @@ import data.LocationDaoImpl
 import data.LocationDataDaoImpl
 import data.RouteDaoImpl
 import data.StopDaoImpl
+import model.ConfigItem
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
