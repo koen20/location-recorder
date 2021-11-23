@@ -5,7 +5,7 @@ on:
     branches: master
 
 jobs:
-  main:
+  amd64:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -28,6 +28,24 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ghcr.io/koen20/location-recorder:amd64
+      - name: latest manifest
+        run: ./hooks/post_push
+
+  arm32v7:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: koen20
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push arm32v7
         uses: docker/build-push-action@v2
         with:
@@ -35,8 +53,6 @@ jobs:
           file: ./arm32v7.dockerfile
           platforms: linux/arm/v7
           push: true
-          cache-from: type=registry,ref=ghcr.io/koen20/location-recorder:buildcache
-          cache-to: type=registry,ref=ghcr.io/koen20/location-recorder:buildcache,mode=max
           tags: ghcr.io/koen20/location-recorder:arm32v7
       - name: latest manifest
         run: ./hooks/post_push

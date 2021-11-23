@@ -1,4 +1,4 @@
-FROM arm32v7/adoptopenjdk:11-jdk as builder
+FROM eclipse-temurin:11 as builder
 RUN apt-get update && apt-get install -y \
   libatomic1 \
   && rm -rf /var/lib/apt/lists/*
@@ -9,7 +9,19 @@ RUN chmod +x gradlew
 RUN ./gradlew clean build
 RUN tar -xvf server/build/distributions/server-1.0.tar
 
-FROM arm32v7/adoptopenjdk:11-jre
+# Create a custom Java runtime
+RUN $JAVA_HOME/bin/jlink \
+         --add-modules java.base \
+         --strip-debug \
+         --no-man-pages \
+         --no-header-files \
+         --compress=2 \
+         --output /javaruntime
+
+FROM debian:bullseye-slim
+ENV JAVA_HOME=/opt/java/openjdk
+ENV PATH "${JAVA_HOME}/bin:${PATH}"
+COPY --from=builder /javaruntime $JAVA_HOME
 
 ENV APPLICATION_USER ktor
 RUN useradd -ms /bin/bash $APPLICATION_USER
