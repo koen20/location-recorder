@@ -105,15 +105,14 @@ class LocationDaoImpl(private val conn: Connection) : LocationDao {
     override fun getLocationsView(startTime: Long, endTime: Long): ArrayList<LocationView> {
         val items: ArrayList<LocationView> = ArrayList()
         try {
-            val query = "SELECT * FROM location, stop WHERE location.stopId = stop.stopId AND (startDate BETWEEN '${Mqtt.getMysqlDateString(startTime)}' AND '${
-                Mqtt.getMysqlDateString(
-                    endTime
-                )
-            }' or endDate BETWEEN '${Mqtt.getMysqlDateString(startTime)}' AND '${
-                Mqtt.getMysqlDateString(
-                    endTime
-                )
-            }') order by location.locationId"
+            val startTimeString = Mqtt.getMysqlDateString(startTime)
+            val endTimeString = Mqtt.getMysqlDateString(endTime)
+            val query =
+                "SELECT * FROM location, stop WHERE location.stopId = stop.stopId AND ((startDate BETWEEN '${startTimeString}' AND '${
+                    endTimeString
+                }' " +
+                        "or endDate BETWEEN '${startTimeString}' AND '${endTimeString}') or ('${startTimeString}' between startDate AND endDate or '${endTimeString}' between startDate AND endDate))" +
+                        " order by location.locationId"
 
             conn.createStatement().use { stmt ->
                 stmt.executeQuery(query).use { rs ->
