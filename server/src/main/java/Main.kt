@@ -13,11 +13,12 @@ fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 fun Application.module() {
     val configItem = Gson().fromJson(FileReader("config.json"), ConfigItem::class.java)
     val mysql = Mysql(configItem)
+
     Timer().scheduleAtFixedRate(object : TimerTask() {
         override fun run() {
             Timeline(configItem, mysql).addItemsToDb()
         }
-    }, 2000, 21600000) //6 hours
+    }, 2000, 1200000) //20 minutes
     routing {
         data(mysql, configItem)
 

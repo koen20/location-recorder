@@ -9,7 +9,7 @@ import java.sql.Timestamp
 import java.util.*
 
 class Address {
-    fun getAddressName(lat: Double, lon: Double, configItem: ConfigItem, mysql: Mysql): Stop {
+    fun getAddressName(lat: Double, lon: Double, configItem: ConfigItem, mysql: Mysql, disableInsert: Boolean): Stop {
         val stops: ArrayList<Stop> = mysql.stopDao.getStops()
         for (i in stops.indices) {
             if (Timeline.distance(lat, stops[i].lat, lon, stops[i].lon, 0.0, 0.0) < configItem.radiusLocation) {
@@ -17,23 +17,24 @@ class Address {
             }
         }
 
-        var name = ""
-        var fetched: Stop? = null
-        try {
-            fetched = getAddress(lat, lon, configItem)
-        } catch (e: Exception) {
-            println("Failed to get address from Openstreetmap")
-            fetched = Stop(0, null, lat, lon, "", "", null, Timestamp(Date().time))
-        }
+        var fetched = Stop(0, "", lat, lon, "", "", null, null)
+        if (!disableInsert) {
+            try {
+                fetched = getAddress(lat, lon, configItem)
+            } catch (e: Exception) {
+                println("Failed to get address from Openstreetmap")
+                fetched = Stop(0, null, lat, lon, "", "", null, Timestamp(Date().time))
+            }
 
-        //add fetched address to db
-        if (fetched != null) {
+            //add fetched address to db
+
             mysql.stopDao.addStop(fetched)
-            fetched = checkDbAddress(mysql, lat, lon, configItem.radiusLocation)
-            return fetched!!
+            fetched = checkDbAddress(mysql, lat, lon, configItem.radiusLocation)!!
+            return fetched
         }
+        println("Insert disabled ${fetched.name}")
 
-        return Stop(0, "", lat, lon, "", "", null, null)
+        return fetched
     }
 
     //get addresses from Mysql.kt and return if items exists within radius

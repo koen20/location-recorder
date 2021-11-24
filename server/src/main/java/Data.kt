@@ -58,6 +58,12 @@ fun Route.data(mysql: Mysql, configItem: ConfigItem) {
                 try {
                     val dt = df.parse(date)
                     val locations = mysql.locationDao.getLocationsView(dt.time / 1000, (dt.time + 86400000) / 1000)
+
+                    //locations doesn't include the latest location. Fetch data since the latest location and add it.
+                    val locationDataItems = mysql.locationDataDao.getData(locations[locations.size - 1].start / 1000)
+                    val locationsGenerated = Timeline(configItem, mysql).getData(locationDataItems)
+                    locationsGenerated.removeAt(0)
+                    locations.addAll(locationsGenerated)
                     val gson = Gson()
                     val jsonObject = JsonObject()
                     jsonObject.add("stops", gson.toJsonTree(locations))

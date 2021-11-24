@@ -6,7 +6,7 @@ import kotlin.math.*
 
 
 class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
-    fun getData(locationItems: ArrayList<LocationItem>): ArrayList<LocationView> {
+    fun getData(locationItems: ArrayList<LocationItem>, skipLast: Boolean = true): ArrayList<LocationView> {
         val locationList = ArrayList<LocationView>()
 
         var lat = 0.0
@@ -77,7 +77,8 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
                     locationItemsLoop.sumOf { it.lon },
                     locationItemsLoop.size,
                     firstTime!!,
-                    endTime!!
+                    endTime!!,
+                    skipLast
                 )
             )
         }
@@ -134,6 +135,7 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
 
             // update last added location item with new information
             val item = locations[0]
+            locations[0].locationId = locationsDbLast[0].locationId
             mysql.locationDao.updateLocation(
                 Location(
                     locationsDbLast[0].locationId,
@@ -142,11 +144,17 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
                     item.stopId
                 )
             )
-            locations.removeAt(0)
         }
+        locations.removeAt(locations.size - 1)
 
-        locations.forEach {
-            it.locationId = mysql.locationDao.addLocation(it)!!.locationId
+        locations.forEachIndexed { index, it ->
+            if (locationsDbLast.size != 0) {
+                if (index > 0) {
+                    it.locationId = mysql.locationDao.addLocation(it)!!.locationId
+                }
+            } else {
+                it.locationId = mysql.locationDao.addLocation(it)!!.locationId
+            }
         }
 
         //get all routes between locations. Then add the start and end location id to the route item
@@ -166,12 +174,13 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
         }
     }
 
-    private fun add(latTot: Double, lonTot: Double, count: Int, firstTime: Timestamp, endTime: Timestamp): LocationView {
+    private fun add(latTot: Double, lonTot: Double, count: Int, firstTime: Timestamp, endTime: Timestamp, skipLast: Boolean = false): LocationView {
         val stop = Address().getAddressName(
             round(latTot / count, 5),
             round(lonTot / count, 5),
             configItem,
-            mysql
+            mysql,
+            skipLast
         )
 
         return LocationView(
