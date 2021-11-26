@@ -6,7 +6,7 @@ import kotlin.math.*
 
 
 class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
-    fun getData(locationItems: ArrayList<LocationItem>, skipLast: Boolean = true): ArrayList<LocationView> {
+    fun getData(locationItems: ArrayList<LocationItem>, skipLast: Boolean = true, skipStops: Boolean = false): ArrayList<LocationView> {
         val locationList = ArrayList<LocationView>()
 
         var lat = 0.0
@@ -50,7 +50,8 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
                                 locationItemsLoop.sumOf { it.lon },
                                 locationItemsLoop.size,
                                 firstTime!!,
-                                endTime!!
+                                endTime!!,
+                                skipStops
                             )
                         )
                     added = true
@@ -78,6 +79,7 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
                     locationItemsLoop.size,
                     firstTime!!,
                     endTime!!,
+                    skipStops,
                     skipLast
                 )
             )
@@ -174,14 +176,17 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
         }
     }
 
-    private fun add(latTot: Double, lonTot: Double, count: Int, firstTime: Timestamp, endTime: Timestamp, skipLast: Boolean = false): LocationView {
-        val stop = Address().getAddressName(
-            round(latTot / count, 5),
-            round(lonTot / count, 5),
-            configItem,
-            mysql,
-            skipLast
-        )
+    private fun add(latTot: Double, lonTot: Double, count: Int, firstTime: Timestamp, endTime: Timestamp, skipStops: Boolean, skipLast: Boolean = false): LocationView {
+        var stop = Stop(0, "", round(latTot / count, 5), round(lonTot / count, 5), "", "", null, null)
+        if (!skipStops) {
+            stop = Address().getAddressName(
+                round(latTot / count, 5),
+                round(lonTot / count, 5),
+                configItem,
+                mysql,
+                skipLast
+            )
+        }
 
         return LocationView(
             0,

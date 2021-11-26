@@ -20,6 +20,10 @@ application {
     mainClassName = "io.ktor.server.netty.EngineMain"
 }
 
+tasks.test {
+    useJUnitPlatform()
+}
+
 dependencies {
     implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
     implementation("org.mariadb.jdbc:mariadb-java-client:2.7.4")
@@ -29,6 +33,8 @@ dependencies {
     implementation("io.ktor:ktor-server-netty:$ktor_version")
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
+    testImplementation(platform("org.junit:junit-bom:5.8.1"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
