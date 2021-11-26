@@ -15,8 +15,6 @@ interface LocationDao {
     fun updateLocation(location: Location): Boolean
     fun getLocations(lastValue: Boolean): ArrayList<Location>
     fun getLocationsView(startTime: Long, endTime: Long): ArrayList<LocationView>
-
-    //fun getLocations(startTime: Long, endTime: Long): ArrayList<LocationName>
     fun getLocations(stopName: String): ArrayList<Location>
 }
 
@@ -113,8 +111,14 @@ class LocationDaoImpl(private val conn: Connection) : LocationDao {
                 }' " +
                         "or endDate BETWEEN '${startTimeString}' AND '${endTimeString}') or ('${startTimeString}' between startDate AND endDate or '${endTimeString}' between startDate AND endDate))" +
                         " order by location.locationId"
-
-            conn.createStatement().use { stmt ->
+            conn.prepareStatement("SELECT * FROM location, stop WHERE location.stopId = stop.stopId AND ((startDate BETWEEN ? AND ? or endDate BETWEEN ? AND ?) or (? between startDate AND endDate or ? between startDate AND endDate))" +
+                    " order by location.locationId").use { stmt ->
+                stmt.setTimestamp(1, Timestamp(startTime))
+                stmt.setTimestamp(2, Timestamp(endTime))
+                stmt.setTimestamp(3, Timestamp(startTime))
+                stmt.setTimestamp(4, Timestamp(endTime))
+                stmt.setTimestamp(5, Timestamp(startTime))
+                stmt.setTimestamp(6, Timestamp(endTime))
                 stmt.executeQuery(query).use { rs ->
                     while (rs.next()) {
                         val locationViewItem = LocationView(
@@ -136,53 +140,6 @@ class LocationDaoImpl(private val conn: Connection) : LocationDao {
 
         return items
     }
-
-    /*override fun getLocations(startTime: Long, endTime: Long): ArrayList<LocationName> {
-        val data = ArrayList<LocationName>()
-        conn.createStatement().use { stmt ->
-            stmt.executeQuery(
-                "SELECT * FROM location, stops WHERE (startDate BETWEEN '${Mqtt.getMysqlDateString(startTime)}' AND '${
-                    Mqtt.getMysqlDateString(
-                        endTime
-                    )
-                }' or endDate BETWEEN '${Mqtt.getMysqlDateString(startTime)}' AND '${
-                    Mqtt.getMysqlDateString(
-                        endTime
-                    )
-                }') AND location.savedLocationId = stops.id"
-            ).use { rs ->
-                while (rs.next()) {
-                    data.add(
-                        LocationName(
-                            0, rs.getTimestamp("startDate"), rs.getTimestamp("endDate"),
-                            rs.getInt("osDataId"), rs.getInt("savedLocationId"), rs.getString("name"), rs.getDouble("lat"), rs.getDouble("lon")
-                        )
-                    )
-                }
-            }
-        }
-
-        conn.createStatement().use { stmt ->
-            stmt.executeQuery(
-                "SELECT * FROM location, osData WHERE startDate BETWEEN '${Mqtt.getMysqlDateString(startTime)}' AND '${
-                    Mqtt.getMysqlDateString(
-                        endTime
-                    )
-                }' AND location.osDataId = osData.id"
-            ).use { rs ->
-                while (rs.next()) {
-                    data.add(
-                        LocationName(
-                            0, rs.getTimestamp("startDate"), rs.getTimestamp("endDate"),
-                            rs.getInt("osDataId"), rs.getInt("savedLocationId"), rs.getString("name"), rs.getDouble("lat"), rs.getDouble("lon")
-                        )
-                    )
-                }
-            }
-        }
-
-        return data
-    }*/
 
     override fun getLocations(stopName: String): ArrayList<Location> {
         val items: ArrayList<Location> = ArrayList()

@@ -1,19 +1,17 @@
 package data
 
 import model.Route
-import java.sql.Connection
-import java.sql.SQLException
-import java.sql.Statement
-import java.sql.Types
+import java.sql.*
 
 interface RouteDao {
     fun addRoute(route: Route): Route?
+
     //fun updateRoute(route: Route): Boolean
     //fun getRoutes(): ArrayList<Route>
-    //fun getRoutesView(startTime: Long, endTime: Long): ArrayList<RouteView>
+    fun getRoutes(startTime: Long, endTime: Long): ArrayList<Route>
 }
 
-class RouteDaoImpl (private val conn: Connection) : RouteDao {
+class RouteDaoImpl(private val conn: Connection) : RouteDao {
     //add route to db, returns added route with the generated id
     override fun addRoute(route: Route): Route? {
         var routeAdded: Route? = null
@@ -43,5 +41,43 @@ class RouteDaoImpl (private val conn: Connection) : RouteDao {
             exception.printStackTrace()
         }
         return routeAdded
+    }
+
+    override fun getRoutes(startTime: Long, endTime: Long): ArrayList<Route> {
+        val items: ArrayList<Route> = ArrayList()
+        try {
+            conn.prepareStatement(
+                "Select * FROM route, location WHERE route.startLocationId = location.locationId AND (startDate between ? AND ? AND endDate between ? AND ?)"
+            ).use { stmt ->
+                stmt.setTimestamp(1, Timestamp(startTime))
+                stmt.setTimestamp(2, Timestamp(endTime))
+                stmt.setTimestamp(3, Timestamp(startTime))
+                stmt.setTimestamp(4, Timestamp(endTime))
+                stmt.executeQuery().use { rs ->
+                    while (rs.next()) {
+                        val routeItem = Route(
+                            rs.getInt("routeId"),
+                            null,
+                            null,
+                            rs.getInt("startLocationId"),
+                            rs.getInt("endLocationId"),
+                            null,
+                            null,
+                            null,
+                            rs.getDouble("distance"),
+                            null,
+                            null,
+                            rs.getString("customName") ?: rs.getString("name"),
+                            rs.getDouble("speed")
+                        )
+                        items.add(routeItem)
+                    }
+                }
+            }
+        } catch (e: SQLException) {
+            e.printStackTrace()
+        }
+
+        return items
     }
 }
