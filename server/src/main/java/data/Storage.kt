@@ -1,6 +1,8 @@
 import data.LocationDaoImpl
 import data.LocationDataDaoImpl
+import data.RouteDaoImpl
 import data.StopDaoImpl
+import model.ConfigItem
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
@@ -11,6 +13,7 @@ class Mysql(configItem: ConfigItem) {
     lateinit var locationDataDao: LocationDataDaoImpl
     lateinit var locationDao: LocationDaoImpl
     lateinit var stopDao: StopDaoImpl
+    lateinit var routeDao: RouteDaoImpl
 
     init {
         try {
@@ -19,6 +22,7 @@ class Mysql(configItem: ConfigItem) {
             locationDataDao = LocationDataDaoImpl(conn)
             locationDao = LocationDaoImpl(conn)
             stopDao = StopDaoImpl(conn)
+            routeDao = RouteDaoImpl(conn)
         } catch (e: Exception) {
             println("Failed to connect to database $e")
         }

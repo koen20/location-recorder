@@ -1,3 +1,4 @@
+import model.ConfigItem;
 import org.eclipse.paho.client.mqttv3.*;
 import org.json.JSONException;
 import org.json.JSONObject;

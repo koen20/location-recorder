@@ -1,3 +1,5 @@
+package model
+
 class ConfigItem(
     val mqttServer: String,
     val mqttUsername: String,

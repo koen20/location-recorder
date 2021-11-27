@@ -1,24 +1,17 @@
-import com.google.gson.Gson
-import com.google.gson.JsonObject
-import model.Location
-import model.LocationItem
-import model.LocationView
-import model.Route
+import model.*
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.sql.Timestamp
-import java.util.*
 import kotlin.math.*
 
 
-class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
-    fun getDataDate(dt: Date): String {
-        return getData(mysql.locationDataDao.getData(dt.time / 1000, (dt.time + 86400000) / 1000)).toString()
-    }
-
-    fun getData(locationItems: ArrayList<LocationItem>): JsonObject {
+class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
+    fun getData(
+        locationItems: ArrayList<LocationItem>,
+        skipLast: Boolean = true,
+        skipStops: Boolean = false
+    ): ArrayList<LocationView> {
         val locationList = ArrayList<LocationView>()
-        val jsonObjectRes = JsonObject()
 
         var lat = 0.0
         var lon = 0.0
@@ -33,9 +26,11 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
         locationItems.forEachIndexed { index, item ->
             locationItems[index].date = Timestamp(item.date.time)
             var radiusLocation = configItem.radiusLocation
+
+            // increase the location radius if the time is longer than 14 minutes between two points
             if (distance(lat, item.lat, lon, item.lon, 0.0, 0.0) < 600 && item.date.time - lastTime > 820000) {
                 if (locationList.size != 0) {
-                    val lastAdded = locationList.get(locationList.size - 1)
+                    val lastAdded = locationList[locationList.size - 1]
                     if (distance(lastAdded.lat, item.lat, lastAdded.lon, item.lon, 0.0, 0.0) > 300) {
                         radiusLocation = 600
                     }
@@ -52,18 +47,19 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
                     }
                     while (locationItemsLoop.size > locationCountLim) {
                         locationItemsLoop.removeAt(locationItemsLoop.size - 1)
-                        locationItemsLoop.removeAt(0);
+                        locationItemsLoop.removeAt(0)
                     }
 
                     locationList.add(
-                            add(
-                                locationItemsLoop.sumOf { it.lat },
-                                locationItemsLoop.sumOf { it.lon },
-                                locationItemsLoop.size,
-                                firstTime!!,
-                                endTime!!
-                            )
+                        add(
+                            locationItemsLoop.sumOf { it.lat },
+                            locationItemsLoop.sumOf { it.lon },
+                            locationItemsLoop.size,
+                            firstTime!!,
+                            endTime!!,
+                            skipStops
                         )
+                    )
                     added = true
                 }
                 locationItemsLoop.clear()
@@ -88,7 +84,9 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
                     locationItemsLoop.sumOf { it.lon },
                     locationItemsLoop.size,
                     firstTime!!,
-                    endTime!!
+                    endTime!!,
+                    skipStops,
+                    skipLast
                 )
             )
         }
@@ -98,8 +96,7 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
         //remove parts with possible inaccurate gps data
         try {
             //loop through all routes
-            val removeListR = ArrayList<Route>()
-            arrayRoutes.forEachIndexed { index, item ->
+            arrayRoutes.forEach { item ->
                 if (item.pointCount!! <= 4 && item.distance < 700 &&
                     item.startLocation == item.stopLocation
                 ) {
@@ -107,7 +104,6 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
                     for (k in 0 until locationList.size - 1) {
                         val itemStop = locationList[k]
                         if (itemStop.end == item.startDate) {//get the stop before the route that is being removed
-                            removeListR.add(item)
                             locationList[k].end = locationList[k + 1].end
                             removeList.add(locationList[k + 1])
                         }
@@ -117,62 +113,82 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
                     }
                 }
             }
-            removeListR.forEach {
-                arrayRoutes.remove(it)
-            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
-        val gson = Gson()
-
-        jsonObjectRes.add("routes", gson.toJsonTree(arrayRoutes))
-        jsonObjectRes.add("stops", gson.toJsonTree(locationList))
-
-        return jsonObjectRes
+        return locationList
     }
 
     fun addItemsToDb() {
-        val locationsDb = mysql.locationDao.getLocations(true)
-        if (locationsDb.size == 0) {
-            // add everything to db
+        // get first location item, if nothing exists add everything,
+        // if there already is an item resume adding at start date
+
+        val locationsDbLast = mysql.locationDao.getLocations(true)
+        val locationDataItems: ArrayList<LocationItem>
+        val locations: ArrayList<LocationView>
+        if (locationsDbLast.size == 0) {
             println("Adding all locations to db")
-            val res = getData(mysql.locationDataDao.getData(0))
-            val jsonArray = res.get("stops").asJsonArray
-            for (g in 0 until jsonArray.size()) {
-                val itemL = jsonArray.get(g).asJsonObject
-                mysql.locationDao.addLocation(itemL)
-            }
+            locationDataItems = mysql.locationDataDao.getData(0)
+            locations = getData(locationDataItems)
         } else {
             println("Adding new locations to db")
-            val res = getData(mysql.locationDataDao.getData(locationsDb[0].startDate.time / 1000))
-            println(res)
-            val jsonArray = res.get("stops").asJsonArray
-            val item = jsonArray.get(0).asJsonObject
+            locationDataItems = mysql.locationDataDao.getData(locationsDbLast[0].startDate.time)
+            locations = getData(locationDataItems)
+
+            // update last added location item with new information
+            val item = locations[0]
+            locations[0].locationId = locationsDbLast[0].locationId
             mysql.locationDao.updateLocation(
                 Location(
-                    locationsDb[0].locationId,
-                    Timestamp(item.get("start").asLong),
-                    Timestamp(item.get("end").asLong),
-                    item.get("stopId").asInt
+                    locationsDbLast[0].locationId,
+                    Timestamp(item.start),
+                    Timestamp(item.end),
+                    item.stopId
                 )
             )
+        }
+        locations.removeAt(locations.size - 1)
 
-            jsonArray.remove(0)
-            for (g in 0 until jsonArray.size()) {
-                val itemL = jsonArray.get(g).asJsonObject
-                mysql.locationDao.addLocation(itemL)
+        // add all locations to the database and update the locationId in the locations array with the generated id
+        locations.forEachIndexed { index, it ->
+            if (locationsDbLast.size != 0) {
+                if (index > 0) {
+                    it.locationId = mysql.locationDao.addLocation(it)!!.locationId
+                }
+            } else {
+                it.locationId = mysql.locationDao.addLocation(it)!!.locationId
             }
+        }
+
+        //get all routes between locations. Then add the start and end location id to the route item
+        val arrayRoutes = Routes().getRouteFromStop(locations, locationDataItems)
+        arrayRoutes.forEach {
+            locations.forEach { locationView ->
+                if (locationView.end == it.startDate) {
+                    it.startLocationId = locationView.locationId
+                } else if (locationView.start == it.endDate) {
+                    it.endLocationId = locationView.locationId
+                }
+            }
+        }
+
+        arrayRoutes.forEach {
+            mysql.routeDao.addRoute(it)
         }
     }
 
-    fun add(latTot: Double, lonTot: Double, count: Int, firstTime: Timestamp, endTime: Timestamp): LocationView {
-        val stop = Address().getAddressName(
-            round(latTot / count, 5),
-            round(lonTot / count, 5),
-            configItem,
-            mysql
-        )
+    private fun add(latTot: Double, lonTot: Double, count: Int, firstTime: Timestamp, endTime: Timestamp, skipStops: Boolean, skipLast: Boolean = false): LocationView {
+        var stop = Stop(0, "", round(latTot / count, 5), round(lonTot / count, 5), "", "", null, null)
+        if (!skipStops) {
+            stop = Address().getAddressName(
+                round(latTot / count, 5),
+                round(lonTot / count, 5),
+                configItem,
+                mysql,
+                skipLast
+            )
+        }
 
         return LocationView(
             0,
@@ -186,6 +202,7 @@ class Timeline(val configItem: ConfigItem, val mysql: Mysql) {
     }
 
     companion object {
+        // get the distance between two coordinates in meters
         fun distance(lat1: Double, lat2: Double, lon1: Double, lon2: Double, el1: Double, el2: Double): Double {
             val r = 6371 // Radius of the earth
             val latDistance = Math.toRadians(lat2 - lat1)
