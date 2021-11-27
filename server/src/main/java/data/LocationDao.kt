@@ -1,6 +1,5 @@
 package data
 
-import Mqtt
 import model.Location
 import model.LocationView
 import java.sql.Connection
@@ -14,7 +13,7 @@ interface LocationDao {
     fun addLocation(location: LocationView): Location?
     fun updateLocation(location: Location): Boolean
     fun getLocations(lastValue: Boolean): ArrayList<Location>
-    fun getLocationsView(startTime: Long, endTime: Long): ArrayList<LocationView>
+    fun getLocationsView(startTime: Long, endTime: Long, lastValue: Boolean = false): ArrayList<LocationView>
     fun getLocations(stopName: String): ArrayList<Location>
 }
 
@@ -100,26 +99,28 @@ class LocationDaoImpl(private val conn: Connection) : LocationDao {
         return items
     }
 
-    override fun getLocationsView(startTime: Long, endTime: Long): ArrayList<LocationView> {
+    override fun getLocationsView(startTime: Long, endTime: Long, lastValue: Boolean): ArrayList<LocationView> {
         val items: ArrayList<LocationView> = ArrayList()
         try {
-            val startTimeString = Mqtt.getMysqlDateString(startTime)
-            val endTimeString = Mqtt.getMysqlDateString(endTime)
-            val query =
-                "SELECT * FROM location, stop WHERE location.stopId = stop.stopId AND ((startDate BETWEEN '${startTimeString}' AND '${
-                    endTimeString
-                }' " +
-                        "or endDate BETWEEN '${startTimeString}' AND '${endTimeString}') or ('${startTimeString}' between startDate AND endDate or '${endTimeString}' between startDate AND endDate))" +
-                        " order by location.locationId"
-            conn.prepareStatement("SELECT * FROM location, stop WHERE location.stopId = stop.stopId AND ((startDate BETWEEN ? AND ? or endDate BETWEEN ? AND ?) or (? between startDate AND endDate or ? between startDate AND endDate))" +
-                    " order by location.locationId").use { stmt ->
-                stmt.setTimestamp(1, Timestamp(startTime))
-                stmt.setTimestamp(2, Timestamp(endTime))
-                stmt.setTimestamp(3, Timestamp(startTime))
-                stmt.setTimestamp(4, Timestamp(endTime))
-                stmt.setTimestamp(5, Timestamp(startTime))
-                stmt.setTimestamp(6, Timestamp(endTime))
-                stmt.executeQuery(query).use { rs ->
+            val query: String = if (lastValue) {
+                "SELECT * FROM location, stop WHERE location.stopId = stop.stopId " +
+                        "ORDER BY startDate DESC LIMIT 1"
+            } else {
+                "SELECT * FROM location, stop WHERE location.stopId = stop.stopId " +
+                        "AND ((startDate BETWEEN ? AND ? or endDate BETWEEN ? AND ?) " +
+                        "or (? between startDate AND endDate or ? between startDate AND endDate)) " +
+                        "order by location.locationId"
+            }
+            conn.prepareStatement(query).use { stmt ->
+                if (!lastValue) {
+                    stmt.setTimestamp(1, Timestamp(startTime))
+                    stmt.setTimestamp(2, Timestamp(endTime))
+                    stmt.setTimestamp(3, Timestamp(startTime))
+                    stmt.setTimestamp(4, Timestamp(endTime))
+                    stmt.setTimestamp(5, Timestamp(startTime))
+                    stmt.setTimestamp(6, Timestamp(endTime))
+                }
+                stmt.executeQuery().use { rs ->
                     while (rs.next()) {
                         val locationViewItem = LocationView(
                             rs.getInt("locationId"),

@@ -19,7 +19,7 @@ fun Route.data(mysql: Mysql, configItem: ConfigItem) {
                     "Missing endTime",
                     status = HttpStatusCode.BadRequest
                 )
-                call.respondText(Gson().toJson(mysql.locationDataDao.getData(startTime.toLong(), endTime.toLong())))
+                call.respondText(Gson().toJson(mysql.locationDataDao.getData(startTime.toLong() * 1000, endTime.toLong() * 1000)))
             }
         }
 
@@ -33,7 +33,7 @@ fun Route.data(mysql: Mysql, configItem: ConfigItem) {
                 try {
                     val timeline = Timeline(configItem, mysql)
                     val dt = df.parse(date)
-                    val locationDataItems = mysql.locationDataDao.getData(dt.time / 1000, (dt.time + 86400000) / 1000)
+                    val locationDataItems = mysql.locationDataDao.getData(dt.time, dt.time + 86400000)
                     val locationItems = timeline.getData(locationDataItems)
                     val arrayRoutes = Routes().getRouteFromStop(locationItems, locationDataItems)
 
@@ -57,13 +57,17 @@ fun Route.data(mysql: Mysql, configItem: ConfigItem) {
                 )
                 try {
                     val dt = df.parse(date)
-                    val locations = mysql.locationDao.getLocationsView(dt.time / 1000, (dt.time + 86400000) / 1000)
-
+                    val locations = mysql.locationDao.getLocationsView(dt.time, dt.time + 86400000)
+                    val lastLocation = mysql.locationDao.getLocationsView(0, 0, true)
 
                     //locations doesn't include the latest location. Fetch data since the latest location and add it.
-                    if (locations.size > 0) {
+                    if (lastLocation.size > 0) {
                         val locationDataItems =
-                            mysql.locationDataDao.getData(locations[locations.size - 1].start / 1000)
+                            mysql.locationDataDao.getData(
+                                lastLocation[0].start,
+                                (lastLocation[0].start + 86400000)
+                            )
+
                         val locationsGenerated = Timeline(configItem, mysql).getData(locationDataItems)
                         locationsGenerated.removeAt(0)
                         locationsGenerated.forEach {
@@ -77,7 +81,7 @@ fun Route.data(mysql: Mysql, configItem: ConfigItem) {
                     jsonObject.add("stops", gson.toJsonTree(locations))
                     jsonObject.add(
                         "routes",
-                        gson.toJsonTree(mysql.routeDao.getRoutes(dt.time, (dt.time + 86400000)))
+                        gson.toJsonTree(mysql.routeDao.getRoutes(dt.time, dt.time + 86400000))
                     )
                     call.respondText(jsonObject.toString())
                 } catch (e: Exception) {

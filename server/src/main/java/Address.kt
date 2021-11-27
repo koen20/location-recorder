@@ -27,12 +27,10 @@ class Address {
             }
 
             //add fetched address to db
-
             mysql.stopDao.addStop(fetched)
             fetched = checkDbAddress(mysql, lat, lon, configItem.radiusLocation)!!
             return fetched
         }
-        println("Insert disabled ${fetched.name}")
 
         return fetched
     }

@@ -6,7 +6,11 @@ import kotlin.math.*
 
 
 class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
-    fun getData(locationItems: ArrayList<LocationItem>, skipLast: Boolean = true, skipStops: Boolean = false): ArrayList<LocationView> {
+    fun getData(
+        locationItems: ArrayList<LocationItem>,
+        skipLast: Boolean = true,
+        skipStops: Boolean = false
+    ): ArrayList<LocationView> {
         val locationList = ArrayList<LocationView>()
 
         var lat = 0.0
@@ -22,6 +26,8 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
         locationItems.forEachIndexed { index, item ->
             locationItems[index].date = Timestamp(item.date.time)
             var radiusLocation = configItem.radiusLocation
+
+            // increase the location radius if the time is longer than 14 minutes between two points
             if (distance(lat, item.lat, lon, item.lon, 0.0, 0.0) < 600 && item.date.time - lastTime > 820000) {
                 if (locationList.size != 0) {
                     val lastAdded = locationList[locationList.size - 1]
@@ -45,15 +51,15 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
                     }
 
                     locationList.add(
-                            add(
-                                locationItemsLoop.sumOf { it.lat },
-                                locationItemsLoop.sumOf { it.lon },
-                                locationItemsLoop.size,
-                                firstTime!!,
-                                endTime!!,
-                                skipStops
-                            )
+                        add(
+                            locationItemsLoop.sumOf { it.lat },
+                            locationItemsLoop.sumOf { it.lon },
+                            locationItemsLoop.size,
+                            firstTime!!,
+                            endTime!!,
+                            skipStops
                         )
+                    )
                     added = true
                 }
                 locationItemsLoop.clear()
@@ -90,7 +96,6 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
         //remove parts with possible inaccurate gps data
         try {
             //loop through all routes
-            val removeListR = ArrayList<Route>()
             arrayRoutes.forEach { item ->
                 if (item.pointCount!! <= 4 && item.distance < 700 &&
                     item.startLocation == item.stopLocation
@@ -99,7 +104,6 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
                     for (k in 0 until locationList.size - 1) {
                         val itemStop = locationList[k]
                         if (itemStop.end == item.startDate) {//get the stop before the route that is being removed
-                            removeListR.add(item)
                             locationList[k].end = locationList[k + 1].end
                             removeList.add(locationList[k + 1])
                         }
@@ -108,9 +112,6 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
                         locationList.remove(it)
                     }
                 }
-            }
-            removeListR.forEach {
-                arrayRoutes.remove(it)
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -132,7 +133,7 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
             locations = getData(locationDataItems)
         } else {
             println("Adding new locations to db")
-            locationDataItems = mysql.locationDataDao.getData(locationsDbLast[0].startDate.time / 1000)
+            locationDataItems = mysql.locationDataDao.getData(locationsDbLast[0].startDate.time)
             locations = getData(locationDataItems)
 
             // update last added location item with new information
@@ -149,6 +150,7 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
         }
         locations.removeAt(locations.size - 1)
 
+        // add all locations to the database and update the locationId in the locations array with the generated id
         locations.forEachIndexed { index, it ->
             if (locationsDbLast.size != 0) {
                 if (index > 0) {
