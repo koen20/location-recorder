@@ -47,12 +47,10 @@ class RouteDaoImpl(private val conn: Connection) : RouteDao {
         val items: ArrayList<Route> = ArrayList()
         try {
             conn.prepareStatement(
-                "Select * FROM route, location WHERE route.startLocationId = location.locationId AND (startDate between ? AND ? AND endDate between ? AND ?)"
+                "Select * FROM route, location WHERE route.startLocationId = location.locationId AND (endDate between ? AND ?)"
             ).use { stmt ->
                 stmt.setTimestamp(1, Timestamp(startTime))
                 stmt.setTimestamp(2, Timestamp(endTime))
-                stmt.setTimestamp(3, Timestamp(startTime))
-                stmt.setTimestamp(4, Timestamp(endTime))
                 stmt.executeQuery().use { rs ->
                     while (rs.next()) {
                         val routeItem = Route(
@@ -67,7 +65,7 @@ class RouteDaoImpl(private val conn: Connection) : RouteDao {
                             rs.getDouble("distance"),
                             null,
                             null,
-                            rs.getString("customName") ?: rs.getString("name"),
+                            "",
                             rs.getDouble("speed")
                         )
                         items.add(routeItem)

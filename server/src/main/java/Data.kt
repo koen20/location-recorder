@@ -77,7 +77,7 @@ fun Route.data(mysql: Mysql, configItem: ConfigItem) {
                     jsonObject.add("stops", gson.toJsonTree(locations))
                     jsonObject.add(
                         "routes",
-                        gson.toJsonTree(mysql.routeDao.getRoutes(dt.time / 1000, (dt.time + 86400000) / 1000))
+                        gson.toJsonTree(mysql.routeDao.getRoutes(dt.time, (dt.time + 86400000)))
                     )
                     call.respondText(jsonObject.toString())
                 } catch (e: Exception) {

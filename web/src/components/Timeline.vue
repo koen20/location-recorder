@@ -137,7 +137,7 @@ async function setTimeline(date) {
     markers.addLayer(marker);
     for (let k = 0; k < jsonArrayRoutes.length; k++) {
       var itemR = jsonArrayRoutes[k];
-      if (itemR.startDate === item.end) {
+      if (itemR.startLocationId === item.locationId) {
         var icon = ""
         if (itemR.movementType === "walking") {
           icon = "img/walking.svg"
