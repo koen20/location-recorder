@@ -1,3 +1,4 @@
+import com.google.gson.Gson
 import model.*
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -139,6 +140,8 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
             // update last added location item with new information
             val item = locations[0]
             locations[0].locationId = locationsDbLast[0].locationId
+            println("Latest locationFetched: ${Gson().toJsonTree(locationsDbLast[0])}")
+            println("Latest location: ${Gson().toJsonTree(locations[0])}")
             mysql.locationDao.updateLocation(
                 Location(
                     locationsDbLast[0].locationId,
@@ -160,6 +163,7 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
                 it.locationId = mysql.locationDao.addLocation(it)!!.locationId
             }
         }
+        println("Added locations: ${Gson().toJsonTree(locations)}")
 
         //get all routes between locations. Then add the start and end location id to the route item
         val arrayRoutes = Routes().getRouteFromStop(locations, locationDataItems)
@@ -176,6 +180,7 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
         arrayRoutes.forEach {
             mysql.routeDao.addRoute(it)
         }
+        println("Added routes: ${Gson().toJsonTree(arrayRoutes)}")
     }
 
     private fun add(latTot: Double, lonTot: Double, count: Int, firstTime: Timestamp, endTime: Timestamp, skipStops: Boolean, skipLast: Boolean = false): LocationView {
