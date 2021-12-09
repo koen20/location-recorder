@@ -133,15 +133,15 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
             locationDataItems = mysql.locationDataDao.getData(0)
             locations = getData(locationDataItems)
         } else {
-            println("Adding new locations to db")
+            println("Adding new locations to db since ${Mqtt.getMysqlDateString(locationsDbLast[0].startDate.time / 1000)}")
             locationDataItems = mysql.locationDataDao.getData(locationsDbLast[0].startDate.time)
             locations = getData(locationDataItems)
+            println(Gson().toJsonTree(locations))
 
             // update last added location item with new information
             val item = locations[0]
             locations[0].locationId = locationsDbLast[0].locationId
             println("Latest locationFetched: ${Gson().toJsonTree(locationsDbLast[0])}")
-            println("Latest location: ${Gson().toJsonTree(locations[0])}")
             mysql.locationDao.updateLocation(
                 Location(
                     locationsDbLast[0].locationId,
@@ -183,7 +183,15 @@ class Timeline(private val configItem: ConfigItem, private val mysql: Mysql) {
         println("Added routes: ${Gson().toJsonTree(arrayRoutes)}")
     }
 
-    private fun add(latTot: Double, lonTot: Double, count: Int, firstTime: Timestamp, endTime: Timestamp, skipStops: Boolean, skipLast: Boolean = false): LocationView {
+    private fun add(
+        latTot: Double,
+        lonTot: Double,
+        count: Int,
+        firstTime: Timestamp,
+        endTime: Timestamp,
+        skipStops: Boolean,
+        skipLast: Boolean = false
+    ): LocationView {
         var stop = Stop(0, "", round(latTot / count, 5), round(lonTot / count, 5), "", "", null, null)
         if (!skipStops) {
             stop = Address().getAddressName(
