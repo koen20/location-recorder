@@ -13,6 +13,7 @@ fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 fun Application.module() {
     val configItem = Gson().fromJson(FileReader("config.json"), ConfigItem::class.java)
     val mysql = Mysql(configItem)
+    val mqtt = Mqtt(configItem, mysql)
 
     Timer().scheduleAtFixedRate(object : TimerTask() {
         override fun run() {
