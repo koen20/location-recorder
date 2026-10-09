@@ -9,5 +9,9 @@ class ConfigItem(
     val mysqlUsername: String,
     val mysqlPassword: String,
     val radiusLocation: Int,
-    val reverseGeocodeAddress: String
+    val reverseGeocodeAddress: String,
+    val lightwaveUrl: String? = null,
+    val lightwaveBucketId: String? = null,
+    val lightwaveUserId: String? = null,
+    val lightwaveApiKey: String? = null
 )

@@ -6,4 +6,8 @@
   "mqttUsername": "",
   "mqttPassword":  "",
   "radiusLocation":  140,
-  "reverseGeocodeAddress":  "https://vps3.koenhabets.nl/reverse?lon=LON&lat=LAT"}
+  "reverseGeocodeAddress":  "https://vps3.koenhabets.nl/reverse?lon=LON&lat=LAT",
+  "lightwaveUrl":  "https://lightwave.koenhabets.nl",
+  "lightwaveBucketId":  "your-bucket-id",
+  "lightwaveUserId":  "your-user-id",
+  "lightwaveApiKey":  "your-api-key"}

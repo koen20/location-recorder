@@ -106,6 +106,6 @@ fun Route.data(mysql: Mysql, configItem: ConfigItem) {
             }
         }
 
-        addPhoneTrackLocation(mysql)
+        addPhoneTrackLocation(mysql, configItem)
     }
 }

@@ -2,16 +2,18 @@ import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import model.ConfigItem
 import java.sql.PreparedStatement
 import java.sql.SQLException
 import java.sql.Types
 import java.util.*
 
-fun Route.addPhoneTrackLocation(mysql: Mysql) {
+fun Route.addPhoneTrackLocation(mysql: Mysql, configItem: ConfigItem) {
     route("/add") {
         get {
             try {
-                val date = Date(call.parameters["timestamp"]!!.toLong() * 1000)
+                val timestamp = call.parameters["timestamp"]!!.toLong()
+                val date = Date(timestamp * 1000)
                 val alt = call.parameters["alt"]!!
 
                 val ps: PreparedStatement =
@@ -29,6 +31,16 @@ fun Route.addPhoneTrackLocation(mysql: Mysql) {
                 ps.setString(6, call.parameters["batt"]!!)
                 ps.setString(7, call.parameters["tid"]!!)
                 ps.execute()
+
+                Lightwave(configItem).sendLocation(
+                    timestamp = timestamp,
+                    lat = call.parameters["lat"]!!.toDouble(),
+                    lon = call.parameters["lon"]!!.toDouble(),
+                    alt = if (alt == "") null else alt.toDouble(),
+                    acc = call.parameters["acc"]!!,
+                    batt = call.parameters["batt"]!!,
+                    tid = call.parameters["tid"]!!
+                )
 
                 call.respondText("added")
             } catch (e: Exception) {
